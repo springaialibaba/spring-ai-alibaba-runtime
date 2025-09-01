@@ -38,14 +38,11 @@ public class AgentConfigurationLoader {
 			throw new IllegalStateException("根代理配置不能为空");
 		}
 
-		// 验证代理卡片配置
-		if (config.getAgentCard() == null) {
-			throw new IllegalStateException("代理卡片配置不能为空");
-		}
-
+		// AgentCard现在是自动生成的，无需验证手动配置
 		logger.info("代理配置验证完成");
 		logger.info("已配置 {} 个代理", config.getAgents().size());
 		logger.info("根代理: {}", config.getRootAgent().getName());
+		logger.info("AgentCard将自动生成");
 	}
 
 }

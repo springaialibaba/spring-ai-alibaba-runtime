@@ -1,6 +1,6 @@
 package com.alibaba.cloud.ai.a2a.server.registry;
 
-import com.alibaba.cloud.ai.a2a.server.config.AgentConfigProperties;
+import io.a2a.spec.AgentCard;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
@@ -12,8 +12,8 @@ public class AgentRegistryConfiguration {
     @Bean
     @ConditionalOnBean(value = {AgentRegistry.class})
     public AgentRegistryService agentRegistryService(AgentRegistry agentRegistry,
-            AgentConfigProperties agentConfigProperties) {
-        return new AgentRegistryService(agentRegistry, agentConfigProperties.getAgentCard());
+            AgentCard agentCard) {
+        return new AgentRegistryService(agentRegistry, agentCard);
     }
     
 }

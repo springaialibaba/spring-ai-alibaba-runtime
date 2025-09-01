@@ -5,7 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -27,6 +29,9 @@ import io.a2a.spec.AgentSkill;
 
 @Configuration
 public class ServerAgentConfiguration {
+
+    @Value("${server.port:10000}")
+    private int port;
 
     @Bean
     public ChatModel chatModel(AgentConfigProperties config) {
@@ -84,11 +89,11 @@ public class ServerAgentConfiguration {
             }
             Method builderMethod = clazz.getMethod("builder");
             Object builder = builderMethod.invoke(null);
-            invokeIfPresent(builder, "name", new Class[] { String.class }, new Object[] { def.getName() });
-            invokeIfPresent(builder, "model", new Class[] { ChatModel.class }, new Object[] { chatModel });
-            invokeIfPresent(builder, "description", new Class[] { String.class }, new Object[] { def.getDescription() });
-            invokeIfPresent(builder, "instruction", new Class[] { String.class }, new Object[] { def.getInstruction() });
-            invokeIfPresent(builder, "outputKey", new Class[] { String.class }, new Object[] { def.getOutputKey() });
+            invokeIfPresent(builder, "name", new Class[]{String.class}, new Object[]{def.getName()});
+            invokeIfPresent(builder, "model", new Class[]{ChatModel.class}, new Object[]{chatModel});
+            invokeIfPresent(builder, "description", new Class[]{String.class}, new Object[]{def.getDescription()});
+            invokeIfPresent(builder, "instruction", new Class[]{String.class}, new Object[]{def.getInstruction()});
+            invokeIfPresent(builder, "outputKey", new Class[]{String.class}, new Object[]{def.getOutputKey()});
             Method buildMethod = builder.getClass().getMethod("build");
             return (BaseAgent) buildMethod.invoke(builder);
         } catch (IllegalArgumentException e) {
@@ -153,12 +158,12 @@ public class ServerAgentConfiguration {
             }
             Method builderMethod = clazz.getMethod("builder");
             Object builder = builderMethod.invoke(null);
-            invokeIfPresent(builder, "name", new Class[] { String.class }, new Object[] { rootConfig.getName() });
-            invokeIfPresent(builder, "model", new Class[] { ChatModel.class }, new Object[] { chatModel });
-            invokeIfPresent(builder, "state", new Class[] { com.alibaba.cloud.ai.graph.KeyStrategyFactory.class }, new Object[] { (com.alibaba.cloud.ai.graph.KeyStrategyFactory) () -> keyStrategies });
-            invokeIfPresent(builder, "inputKey", new Class[] { String.class }, new Object[] { rootConfig.getInputKey() });
-            invokeIfPresent(builder, "outputKey", new Class[] { String.class }, new Object[] { rootConfig.getOutputKey() });
-            invokeIfPresent(builder, "subAgents", new Class[] { List.class }, new Object[] { subAgents });
+            invokeIfPresent(builder, "name", new Class[]{String.class}, new Object[]{rootConfig.getName()});
+            invokeIfPresent(builder, "model", new Class[]{ChatModel.class}, new Object[]{chatModel});
+            invokeIfPresent(builder, "state", new Class[]{com.alibaba.cloud.ai.graph.KeyStrategyFactory.class}, new Object[]{(com.alibaba.cloud.ai.graph.KeyStrategyFactory) () -> keyStrategies});
+            invokeIfPresent(builder, "inputKey", new Class[]{String.class}, new Object[]{rootConfig.getInputKey()});
+            invokeIfPresent(builder, "outputKey", new Class[]{String.class}, new Object[]{rootConfig.getOutputKey()});
+            invokeIfPresent(builder, "subAgents", new Class[]{List.class}, new Object[]{subAgents});
             Method buildMethod = builder.getClass().getMethod("build");
             return (BaseAgent) buildMethod.invoke(builder);
         } catch (Exception e) {
@@ -168,30 +173,68 @@ public class ServerAgentConfiguration {
 
     @Bean
     public AgentCard agentCard(AgentConfigProperties config) {
-        AgentConfigProperties.AgentCardInfo cardConfig = config.getAgentCard();
+        AgentConfigProperties.RootAgent rootAgent = config.getRootAgent();
+        List<AgentConfigProperties.AgentDefinition> agents = config.getAgents();
+        List<AgentSkill> skills = generateSkillsFromAgents(agents);
+        String description = generateDescriptionFromRootAgent(rootAgent, agents);
+        String name = generateNameFromRootAgent(rootAgent);
 
-        return new AgentCard.Builder().name(cardConfig.getName())
-                .description(cardConfig.getDescription())
-                .url(cardConfig.getUrl())
-                .version(cardConfig.getVersion())
-                .documentationUrl(cardConfig.getDocumentationUrl())
-                .capabilities(new AgentCapabilities.Builder().streaming(cardConfig.getCapabilities().isStreaming())
-                        .pushNotifications(cardConfig.getCapabilities().isPushNotifications())
-                        .stateTransitionHistory(cardConfig.getCapabilities().isStateTransitionHistory())
+        return new AgentCard.Builder()
+                .name(name)
+                .description(description)
+                .url(String.format("http://localhost:%d/a2a/", port)) // 默认URL
+                .version("1.0.0")
+                .documentationUrl("")
+                .capabilities(new AgentCapabilities.Builder()
+                        .streaming(true)
+                        .pushNotifications(true)
+                        .stateTransitionHistory(true)
                         .build())
-                .defaultInputModes(cardConfig.getDefaultInputModes())
-                .defaultOutputModes(cardConfig.getDefaultOutputModes())
-                .skills(cardConfig.getSkills()
-                        .stream()
-                        .map(skill -> new AgentSkill.Builder().id(skill.getId())
-                                .name(skill.getName())
-                                .description(skill.getDescription())
-                                .tags(skill.getTags())
-                                .examples(skill.getExamples())
-                                .build())
-                        .collect(Collectors.toList()))
-                .protocolVersion(cardConfig.getProtocolVersion())
+                .defaultInputModes(List.of("text"))
+                .defaultOutputModes(List.of("text"))
+                .skills(skills)
+                .protocolVersion("0.2.5")
                 .build();
     }
 
+    private List<AgentSkill> generateSkillsFromAgents(List<AgentConfigProperties.AgentDefinition> agents) {
+        if (agents == null || agents.isEmpty()) {
+            return List.of();
+        }
+
+        return agents.stream()
+                .map(agent -> new AgentSkill.Builder()
+                        .id(agent.getName() + "_skill")
+                        .name(agent.getName())
+                        .description(agent.getDescription())
+                        .tags(List.of(agent.getType().toLowerCase()))
+                        .examples(generateExamplesFromAgent(agent))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<String> generateExamplesFromAgent(AgentConfigProperties.AgentDefinition agent) {
+        List<String> examples = new ArrayList<>();
+
+        examples.add("使用" + agent.getName() + "处理任务");
+
+        return examples;
+    }
+
+    private String generateDescriptionFromRootAgent(AgentConfigProperties.RootAgent rootAgent,
+                                                    List<AgentConfigProperties.AgentDefinition> agents) {
+        if (rootAgent == null) {
+            return "AI代理服务";
+        }
+
+        return rootAgent.getDescription();
+    }
+
+    private String generateNameFromRootAgent(AgentConfigProperties.RootAgent rootAgent) {
+        if (rootAgent == null) {
+            return "AI Agent Service";
+        }
+
+        return rootAgent.getName();
+    }
 }

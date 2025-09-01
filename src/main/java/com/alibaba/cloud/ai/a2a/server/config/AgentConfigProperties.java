@@ -8,425 +8,435 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ai.agent")
 public class AgentConfigProperties {
 
-	private DashScope dashScope;
+    private DashScope dashScope;
 
-	private Map<String, KeyStrategyConfig> keyStrategies;
+    private Map<String, KeyStrategyConfig> keyStrategies;
 
-	private List<AgentDefinition> agents;
+    private List<AgentDefinition> agents;
 
-	private RootAgent rootAgent;
+    private RootAgent rootAgent;
 
-	private AgentCardInfo agentCard;
-	
-	private AgentRegistryInfo registry;
+    private AgentCardInfo agentCard;
 
-	public static class DashScope {
+    private AgentRegistryInfo registry;
 
-		private String apiKey;
+    public static class DashScope {
 
-		public String getApiKey() {
-			return apiKey;
-		}
+        private String apiKey;
 
-		public void setApiKey(String apiKey) {
-			this.apiKey = apiKey;
-		}
+        public String getApiKey() {
+            return apiKey;
+        }
 
-	}
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
 
-	public static class KeyStrategyConfig {
+    }
 
-		private String type;
+    public static class KeyStrategyConfig {
 
-		private String description;
+        private String type;
 
-		public String getType() {
-			return type;
-		}
+        private String description;
 
-		public void setType(String type) {
-			this.type = type;
-		}
+        public String getType() {
+            return type;
+        }
 
-		public String getDescription() {
-			return description;
-		}
+        public void setType(String type) {
+            this.type = type;
+        }
 
-		public void setDescription(String description) {
-			this.description = description;
-		}
+        public String getDescription() {
+            return description;
+        }
 
-	}
+        public void setDescription(String description) {
+            this.description = description;
+        }
 
-	public static class AgentDefinition {
+    }
 
-		private String name;
+    public static class AgentDefinition {
 
-		private String description;
+        private String name;
 
-		private String instruction;
+        private String description;
 
-		private String outputKey;
+        private String instruction;
 
-		private String type;
+        private String outputKey;
 
-		public String getName() {
-			return name;
-		}
+        private String type;
 
-		public void setName(String name) {
-			this.name = name;
-		}
+        public String getName() {
+            return name;
+        }
 
-		public String getDescription() {
-			return description;
-		}
+        public void setName(String name) {
+            this.name = name;
+        }
 
-		public void setDescription(String description) {
-			this.description = description;
-		}
+        public String getDescription() {
+            return description;
+        }
 
-		public String getInstruction() {
-			return instruction;
-		}
+        public void setDescription(String description) {
+            this.description = description;
+        }
 
-		public void setInstruction(String instruction) {
-			this.instruction = instruction;
-		}
+        public String getInstruction() {
+            return instruction;
+        }
 
-		public String getOutputKey() {
-			return outputKey;
-		}
+        public void setInstruction(String instruction) {
+            this.instruction = instruction;
+        }
 
-		public void setOutputKey(String outputKey) {
-			this.outputKey = outputKey;
-		}
+        public String getOutputKey() {
+            return outputKey;
+        }
 
-		public String getType() {
-			return type;
-		}
+        public void setOutputKey(String outputKey) {
+            this.outputKey = outputKey;
+        }
 
-		public void setType(String type) {
-			this.type = type;
-		}
+        public String getType() {
+            return type;
+        }
 
-	}
+        public void setType(String type) {
+            this.type = type;
+        }
 
-	public static class RootAgent {
+    }
 
-		private String name;
+    public static class RootAgent {
 
-		private String type; // 可选：缺省为 LlmRoutingAgent
+        private String name;
 
-		private String inputKey;
+        private String type; // 可选：缺省为 LlmRoutingAgent
 
-		private String outputKey;
+        private String inputKey;
 
-		private List<String> subAgentNames;
+        private String outputKey;
 
-		public String getName() {
-			return name;
-		}
+        private List<String> subAgentNames;
 
-		public void setName(String name) {
-			this.name = name;
-		}
+        private String description;
 
-		public String getType() {
-			return type;
-		}
+        public String getName() {
+            return name;
+        }
 
-		public void setType(String type) {
-			this.type = type;
-		}
+        public void setName(String name) {
+            this.name = name;
+        }
 
-		public String getInputKey() {
-			return inputKey;
-		}
+        public String getType() {
+            return type;
+        }
 
-		public void setInputKey(String inputKey) {
-			this.inputKey = inputKey;
-		}
+        public void setType(String type) {
+            this.type = type;
+        }
 
-		public String getOutputKey() {
-			return outputKey;
-		}
+        public String getInputKey() {
+            return inputKey;
+        }
 
-		public void setOutputKey(String outputKey) {
-			this.outputKey = outputKey;
-		}
+        public void setInputKey(String inputKey) {
+            this.inputKey = inputKey;
+        }
 
-		public List<String> getSubAgentNames() {
-			return subAgentNames;
-		}
+        public String getOutputKey() {
+            return outputKey;
+        }
 
-		public void setSubAgentNames(List<String> subAgentNames) {
-			this.subAgentNames = subAgentNames;
-		}
+        public void setOutputKey(String outputKey) {
+            this.outputKey = outputKey;
+        }
 
-	}
+        public List<String> getSubAgentNames() {
+            return subAgentNames;
+        }
 
-	public static class AgentCardInfo {
+        public void setSubAgentNames(List<String> subAgentNames) {
+            this.subAgentNames = subAgentNames;
+        }
 
-		private String name;
+        public String getDescription() {
+            return description;
+        }
 
-		private String description;
+        public void setDescription(String description) {
+            this.description = description;
+        }
 
-		private String url;
+    }
 
-		private String version;
+    public static class AgentCardInfo {
 
-		private String documentationUrl;
+        private String name;
 
-		private Capabilities capabilities;
+        private String description;
 
-		private List<String> defaultInputModes;
+        private String url;
 
-		private List<String> defaultOutputModes;
+        private String version;
 
-		private List<Skill> skills;
+        private String documentationUrl;
 
-		private String protocolVersion;
+        private Capabilities capabilities;
 
-		public String getName() {
-			return name;
-		}
+        private List<String> defaultInputModes;
 
-		public void setName(String name) {
-			this.name = name;
-		}
+        private List<String> defaultOutputModes;
 
-		public String getDescription() {
-			return description;
-		}
+        private List<Skill> skills;
 
-		public void setDescription(String description) {
-			this.description = description;
-		}
+        private String protocolVersion;
 
-		public String getUrl() {
-			return url;
-		}
+        public String getName() {
+            return name;
+        }
 
-		public void setUrl(String url) {
-			this.url = url;
-		}
+        public void setName(String name) {
+            this.name = name;
+        }
 
-		public String getVersion() {
-			return version;
-		}
+        public String getDescription() {
+            return description;
+        }
 
-		public void setVersion(String version) {
-			this.version = version;
-		}
+        public void setDescription(String description) {
+            this.description = description;
+        }
 
-		public String getDocumentationUrl() {
-			return documentationUrl;
-		}
+        public String getUrl() {
+            return url;
+        }
 
-		public void setDocumentationUrl(String documentationUrl) {
-			this.documentationUrl = documentationUrl;
-		}
+        public void setUrl(String url) {
+            this.url = url;
+        }
 
-		public Capabilities getCapabilities() {
-			return capabilities;
-		}
+        public String getVersion() {
+            return version;
+        }
 
-		public void setCapabilities(Capabilities capabilities) {
-			this.capabilities = capabilities;
-		}
+        public void setVersion(String version) {
+            this.version = version;
+        }
 
-		public List<String> getDefaultInputModes() {
-			return defaultInputModes;
-		}
+        public String getDocumentationUrl() {
+            return documentationUrl;
+        }
 
-		public void setDefaultInputModes(List<String> defaultInputModes) {
-			this.defaultInputModes = defaultInputModes;
-		}
+        public void setDocumentationUrl(String documentationUrl) {
+            this.documentationUrl = documentationUrl;
+        }
 
-		public List<String> getDefaultOutputModes() {
-			return defaultOutputModes;
-		}
+        public Capabilities getCapabilities() {
+            return capabilities;
+        }
 
-		public void setDefaultOutputModes(List<String> defaultOutputModes) {
-			this.defaultOutputModes = defaultOutputModes;
-		}
+        public void setCapabilities(Capabilities capabilities) {
+            this.capabilities = capabilities;
+        }
 
-		public List<Skill> getSkills() {
-			return skills;
-		}
+        public List<String> getDefaultInputModes() {
+            return defaultInputModes;
+        }
 
-		public void setSkills(List<Skill> skills) {
-			this.skills = skills;
-		}
+        public void setDefaultInputModes(List<String> defaultInputModes) {
+            this.defaultInputModes = defaultInputModes;
+        }
 
-		public String getProtocolVersion() {
-			return protocolVersion;
-		}
+        public List<String> getDefaultOutputModes() {
+            return defaultOutputModes;
+        }
 
-		public void setProtocolVersion(String protocolVersion) {
-			this.protocolVersion = protocolVersion;
-		}
+        public void setDefaultOutputModes(List<String> defaultOutputModes) {
+            this.defaultOutputModes = defaultOutputModes;
+        }
 
-	}
+        public List<Skill> getSkills() {
+            return skills;
+        }
 
-	public static class Capabilities {
+        public void setSkills(List<Skill> skills) {
+            this.skills = skills;
+        }
 
-		private boolean streaming;
+        public String getProtocolVersion() {
+            return protocolVersion;
+        }
 
-		private boolean pushNotifications;
+        public void setProtocolVersion(String protocolVersion) {
+            this.protocolVersion = protocolVersion;
+        }
 
-		private boolean stateTransitionHistory;
+    }
 
-		public boolean isStreaming() {
-			return streaming;
-		}
+    public static class Capabilities {
 
-		public void setStreaming(boolean streaming) {
-			this.streaming = streaming;
-		}
+        private boolean streaming;
 
-		public boolean isPushNotifications() {
-			return pushNotifications;
-		}
+        private boolean pushNotifications;
 
-		public void setPushNotifications(boolean pushNotifications) {
-			this.pushNotifications = pushNotifications;
-		}
+        private boolean stateTransitionHistory;
 
-		public boolean isStateTransitionHistory() {
-			return stateTransitionHistory;
-		}
+        public boolean isStreaming() {
+            return streaming;
+        }
 
-		public void setStateTransitionHistory(boolean stateTransitionHistory) {
-			this.stateTransitionHistory = stateTransitionHistory;
-		}
+        public void setStreaming(boolean streaming) {
+            this.streaming = streaming;
+        }
 
-	}
+        public boolean isPushNotifications() {
+            return pushNotifications;
+        }
 
-	public static class Skill {
+        public void setPushNotifications(boolean pushNotifications) {
+            this.pushNotifications = pushNotifications;
+        }
 
-		private String id;
+        public boolean isStateTransitionHistory() {
+            return stateTransitionHistory;
+        }
 
-		private String name;
+        public void setStateTransitionHistory(boolean stateTransitionHistory) {
+            this.stateTransitionHistory = stateTransitionHistory;
+        }
 
-		private String description;
+    }
 
-		private List<String> tags;
+    public static class Skill {
 
-		private List<String> examples;
+        private String id;
 
-		public String getId() {
-			return id;
-		}
+        private String name;
 
-		public void setId(String id) {
-			this.id = id;
-		}
+        private String description;
 
-		public String getName() {
-			return name;
-		}
+        private List<String> tags;
 
-		public void setName(String name) {
-			this.name = name;
-		}
+        private List<String> examples;
 
-		public String getDescription() {
-			return description;
-		}
+        public String getId() {
+            return id;
+        }
 
-		public void setDescription(String description) {
-			this.description = description;
-		}
+        public void setId(String id) {
+            this.id = id;
+        }
 
-		public List<String> getTags() {
-			return tags;
-		}
+        public String getName() {
+            return name;
+        }
 
-		public void setTags(List<String> tags) {
-			this.tags = tags;
-		}
+        public void setName(String name) {
+            this.name = name;
+        }
 
-		public List<String> getExamples() {
-			return examples;
-		}
+        public String getDescription() {
+            return description;
+        }
 
-		public void setExamples(List<String> examples) {
-			this.examples = examples;
-		}
+        public void setDescription(String description) {
+            this.description = description;
+        }
 
-	}
-	
-	public static class AgentRegistryInfo {
-		
-		private String type;
-		
-		private boolean enabled = true;
-		
-		public String getType() {
-			return type;
-		}
-		
-		public void setType(String type) {
-			this.type = type;
-		}
-		
-		public boolean isEnabled() {
-			return enabled;
-		}
-		
-		public void setEnabled(boolean enabled) {
-			this.enabled = enabled;
-		}
-	}
+        public List<String> getTags() {
+            return tags;
+        }
 
-	// Getters and setters for main class
-	public DashScope getDashScope() {
-		return dashScope;
-	}
+        public void setTags(List<String> tags) {
+            this.tags = tags;
+        }
 
-	public void setDashScope(DashScope dashScope) {
-		this.dashScope = dashScope;
-	}
+        public List<String> getExamples() {
+            return examples;
+        }
 
-	public Map<String, KeyStrategyConfig> getKeyStrategies() {
-		return keyStrategies;
-	}
+        public void setExamples(List<String> examples) {
+            this.examples = examples;
+        }
 
-	public void setKeyStrategies(Map<String, KeyStrategyConfig> keyStrategies) {
-		this.keyStrategies = keyStrategies;
-	}
+    }
 
-	public List<AgentDefinition> getAgents() {
-		return agents;
-	}
+    public static class AgentRegistryInfo {
 
-	public void setAgents(List<AgentDefinition> agents) {
-		this.agents = agents;
-	}
+        private String type;
 
-	public RootAgent getRootAgent() {
-		return rootAgent;
-	}
+        private boolean enabled = true;
 
-	public void setRootAgent(RootAgent rootAgent) {
-		this.rootAgent = rootAgent;
-	}
+        public String getType() {
+            return type;
+        }
 
-	public AgentCardInfo getAgentCard() {
-		return agentCard;
-	}
+        public void setType(String type) {
+            this.type = type;
+        }
 
-	public void setAgentCard(AgentCardInfo agentCard) {
-		this.agentCard = agentCard;
-	}
-	
-	public AgentRegistryInfo getRegistry() {
-		return registry;
-	}
-	
-	public void setRegistry(AgentRegistryInfo registry) {
-		this.registry = registry;
-	}
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+    }
+
+    // Getters and setters for main class
+    public DashScope getDashScope() {
+        return dashScope;
+    }
+
+    public void setDashScope(DashScope dashScope) {
+        this.dashScope = dashScope;
+    }
+
+    public Map<String, KeyStrategyConfig> getKeyStrategies() {
+        return keyStrategies;
+    }
+
+    public void setKeyStrategies(Map<String, KeyStrategyConfig> keyStrategies) {
+        this.keyStrategies = keyStrategies;
+    }
+
+    public List<AgentDefinition> getAgents() {
+        return agents;
+    }
+
+    public void setAgents(List<AgentDefinition> agents) {
+        this.agents = agents;
+    }
+
+    public RootAgent getRootAgent() {
+        return rootAgent;
+    }
+
+    public void setRootAgent(RootAgent rootAgent) {
+        this.rootAgent = rootAgent;
+    }
+
+    public AgentCardInfo getAgentCard() {
+        return agentCard;
+    }
+
+    public void setAgentCard(AgentCardInfo agentCard) {
+        this.agentCard = agentCard;
+    }
+
+    public AgentRegistryInfo getRegistry() {
+        return registry;
+    }
+
+    public void setRegistry(AgentRegistryInfo registry) {
+        this.registry = registry;
+    }
 }

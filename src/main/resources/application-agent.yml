@@ -23,7 +23,7 @@ ai:
         description: "可以写各种类型的文章，包括散文、小说、诗歌等。"
         instruction: "你是一个专业的作家，擅长写各种类型的文章。请根据用户的要求创作高质量的文章。"
         outputKey: "messages"
-      
+
       - name: "reviewer_agent"
         type: "ReactAgent"
         description: "可以对文章进行评论和修改。"
@@ -35,34 +35,10 @@ ai:
       name: "blog_agent"
       inputKey: "input"
       outputKey: "topic"
+      description: "博客写作代理"
       subAgentNames:
         - "writer_agent"
         - "reviewer_agent"
-    
-    agentCard:
-      name: "Blog Writing Agent"
-      description: "可以根据用户给定的主题写一篇文章，然后将文章交给评论员进行评论，必要时做出修改"
-      url: "http://localhost:10001/a2a/"
-      version: "1.0.0"
-      documentationUrl: "http://example.com/docs"
-      capabilities:
-        streaming: true
-        pushNotifications: true
-        stateTransitionHistory: true
-      defaultInputModes:
-        - "text"
-      defaultOutputModes:
-        - "text"
-      skills:
-        - id: "blog_writing"
-          name: "Blog Writing and Review"
-          description: "写文章并进行评论修改"
-          tags:
-            - "blog"
-          examples:
-            - "帮我写一个100字左右的散文"
-            - "写一篇关于春天的文章"
-      protocolVersion: "0.2.5"
 
     registry:
       type: "nacos"
