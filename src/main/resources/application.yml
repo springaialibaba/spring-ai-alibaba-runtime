@@ -1,0 +1,36 @@
+server:
+  port: 10001
+
+spring:
+  config:
+    import:
+      - classpath:application-agent.yml
+      - classpath:application-nacos.yml
+  application:
+    name: spring-ai-alibaba-a2a-server
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+
+controller:
+  endpoints:
+    process: '/agent'
+    health: '/health'
+    readiness: '/readiness'
+    liveness: '/liveness'
+
+logging:
+  level:
+    com:
+      alibaba:
+        cloud:
+          ai:
+            graph: DEBUG
