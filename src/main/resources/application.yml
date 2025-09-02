@@ -4,8 +4,9 @@ server:
 spring:
   config:
     import:
-      - classpath:application-agent.yml
       - classpath:application-nacos.yml
+      - classpath:application-new-agent.yml
+      - classpath:application-runtime.yml
   application:
     name: spring-ai-alibaba-a2a-server
 
@@ -18,7 +19,6 @@ management:
   endpoint:
     health:
       show-details: always
-
 
 controller:
   endpoints:
@@ -34,3 +34,15 @@ logging:
         cloud:
           ai:
             graph: DEBUG
+
+
+version: v1
+metadata:
+  id: optional
+  name: "my_assistant"
+  description: "An AI assistant for various tasks"
+  mode: agent # 疑惑
+  tags: # 参考kagent/rowboat用于分组/治理/检索
+    - domain: knowledge
+    - env: prod
+    - owner: saa

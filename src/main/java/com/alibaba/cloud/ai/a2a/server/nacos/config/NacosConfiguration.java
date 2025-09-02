@@ -1,8 +1,8 @@
 package com.alibaba.cloud.ai.a2a.server.nacos.config;
 
+import com.alibaba.cloud.ai.a2a.server.config.NewAgentConfigProperties;
 import com.alibaba.cloud.ai.a2a.server.registry.AgentRegistryConfiguration;
 import com.alibaba.cloud.ai.a2a.server.ServerAgentConfiguration;
-import com.alibaba.cloud.ai.a2a.server.config.AgentConfigProperties;
 import com.alibaba.cloud.ai.a2a.server.nacos.NacosAgentRegistry;
 import com.alibaba.cloud.ai.a2a.server.registry.AgentRegistry;
 import com.alibaba.nacos.api.exception.NacosException;
@@ -34,7 +34,7 @@ public class NacosConfiguration {
     }
     
     @Bean
-    @ConditionalOnBean(value = {A2aMaintainerService.class, AgentConfigProperties.class})
+    @ConditionalOnBean(value = {A2aMaintainerService.class, NewAgentConfigProperties.class})
     @ConditionalOnMissingBean
     public AgentRegistry nacosAgentRegistry(A2aMaintainerService a2aMaintainerService,
             NacosConfigProperties nacosConfigProperties) {

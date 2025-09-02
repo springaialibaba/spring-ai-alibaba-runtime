@@ -1,6 +1,6 @@
 package com.alibaba.cloud.ai.a2a.server.registry;
 
-import com.alibaba.cloud.ai.a2a.server.config.AgentConfigProperties;
+import com.alibaba.cloud.ai.a2a.server.config.NewAgentConfigProperties;
 import io.a2a.spec.AgentCard;
 
 import java.util.List;
@@ -12,22 +12,22 @@ import java.util.List;
  */
 public interface AgentRegistry {
     
-    void register(AgentConfigProperties.AgentCardInfo agentCardInfo);
+    void register(NewAgentConfigProperties.AgentCardInfo agentCardInfo);
     
     /**
      * 注册自动生成的AgentCard
      */
     default void register(AgentCard agentCard) {
         // 默认实现：将AgentCard转换为AgentCardInfo
-        AgentConfigProperties.AgentCardInfo agentCardInfo = convertToAgentCardInfo(agentCard);
+        NewAgentConfigProperties.AgentCardInfo agentCardInfo = convertToAgentCardInfo(agentCard);
         register(agentCardInfo);
     }
     
     /**
      * 将AgentCard转换为AgentCardInfo的默认实现
      */
-    default AgentConfigProperties.AgentCardInfo convertToAgentCardInfo(AgentCard agentCard) {
-        AgentConfigProperties.AgentCardInfo info = new AgentConfigProperties.AgentCardInfo();
+    default NewAgentConfigProperties.AgentCardInfo convertToAgentCardInfo(AgentCard agentCard) {
+        NewAgentConfigProperties.AgentCardInfo info = new NewAgentConfigProperties.AgentCardInfo();
         info.setName(agentCard.name());
         info.setDescription(agentCard.description());
         info.setUrl(agentCard.url());
@@ -35,7 +35,7 @@ public interface AgentRegistry {
         info.setDocumentationUrl(agentCard.documentationUrl());
         
         // 设置capabilities
-        AgentConfigProperties.Capabilities capabilities = new AgentConfigProperties.Capabilities();
+        NewAgentConfigProperties.Capabilities capabilities = new NewAgentConfigProperties.Capabilities();
         capabilities.setStreaming(agentCard.capabilities().streaming());
         capabilities.setPushNotifications(agentCard.capabilities().pushNotifications());
         capabilities.setStateTransitionHistory(agentCard.capabilities().stateTransitionHistory());
@@ -46,9 +46,9 @@ public interface AgentRegistry {
         info.setDefaultOutputModes(agentCard.defaultOutputModes());
         
         // 设置技能
-        List<AgentConfigProperties.Skill> skills = agentCard.skills().stream()
+        List<NewAgentConfigProperties.Skill> skills = agentCard.skills().stream()
                 .map(skill -> {
-                    AgentConfigProperties.Skill configSkill = new AgentConfigProperties.Skill();
+                    NewAgentConfigProperties.Skill configSkill = new NewAgentConfigProperties.Skill();
                     configSkill.setId(skill.id());
                     configSkill.setName(skill.name());
                     configSkill.setDescription(skill.description());

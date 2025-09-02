@@ -1,6 +1,6 @@
 package com.alibaba.cloud.ai.a2a.server.nacos.utils;
 
-import com.alibaba.cloud.ai.a2a.server.config.AgentConfigProperties;
+import com.alibaba.cloud.ai.a2a.server.config.NewAgentConfigProperties;
 import com.alibaba.nacos.api.ai.model.a2a.AgentCapabilities;
 import com.alibaba.nacos.api.ai.model.a2a.AgentCard;
 import com.alibaba.nacos.api.ai.model.a2a.AgentSkill;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class AgentCardUtil {
     
-    public static AgentCard transferFromAgentCardInfo(AgentConfigProperties.AgentCardInfo agentCardInfo) {
+    public static AgentCard transferFromAgentCardInfo(NewAgentConfigProperties.AgentCardInfo agentCardInfo) {
         AgentCard agentCard = new AgentCard();
         agentCard.setProtocolVersion(agentCardInfo.getProtocolVersion());
         agentCard.setName(formatAgentName(agentCardInfo.getName()));
@@ -37,7 +37,7 @@ public class AgentCardUtil {
     }
     
     public static AgentCapabilities transferFromAgentCardInfoCapabilities(
-            AgentConfigProperties.Capabilities capabilities) {
+            NewAgentConfigProperties.Capabilities capabilities) {
         AgentCapabilities agentCapabilities = new AgentCapabilities();
         agentCapabilities.setStreaming(capabilities.isStreaming());
         agentCapabilities.setPushNotifications(capabilities.isPushNotifications());
@@ -47,7 +47,7 @@ public class AgentCardUtil {
         return agentCapabilities;
     }
     
-    public static List<AgentSkill> transferFromAgentCardInfoSkills(List<AgentConfigProperties.Skill> skills) {
+    public static List<AgentSkill> transferFromAgentCardInfoSkills(List<NewAgentConfigProperties.Skill> skills) {
         List<AgentSkill> result = new ArrayList<>(skills.size());
         skills.forEach(skill -> {
             AgentSkill newSkill = new AgentSkill();

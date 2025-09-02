@@ -1,6 +1,6 @@
 package com.alibaba.cloud.ai.a2a.server.nacos;
 
-import com.alibaba.cloud.ai.a2a.server.config.AgentConfigProperties;
+import com.alibaba.cloud.ai.a2a.server.config.NewAgentConfigProperties;
 import com.alibaba.cloud.ai.a2a.server.nacos.config.NacosConfigProperties;
 import com.alibaba.cloud.ai.a2a.server.nacos.utils.AgentCardUtil;
 import com.alibaba.cloud.ai.a2a.server.registry.AgentRegistry;
@@ -28,12 +28,12 @@ public class NacosAgentRegistry implements AgentRegistry {
         this.nacosConfigProperties = nacosConfigProperties;
     }
     
-    private AgentCard buildAgentCardFromRootAgent(AgentConfigProperties.AgentCardInfo agentCardInfo) {
+    private AgentCard buildAgentCardFromRootAgent(NewAgentConfigProperties.AgentCardInfo agentCardInfo) {
         return AgentCardUtil.transferFromAgentCardInfo(agentCardInfo);
     }
     
     @Override
-    public void register(AgentConfigProperties.AgentCardInfo agentCardInfo) {
+    public void register(NewAgentConfigProperties.AgentCardInfo agentCardInfo) {
         LOGGER.info("自动注册Agent{}到Nacos中", agentCardInfo.getName());
         try {
             AgentCard agentCard = buildAgentCardFromRootAgent(agentCardInfo);

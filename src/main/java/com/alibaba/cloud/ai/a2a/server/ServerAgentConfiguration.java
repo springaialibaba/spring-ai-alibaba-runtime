@@ -3,25 +3,33 @@ package com.alibaba.cloud.ai.a2a.server;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import java.util.stream.Collectors;
-import java.lang.reflect.Method;
+
 import java.util.ArrayList;
 
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
+import com.alibaba.cloud.ai.graph.KeyStrategyFactory;
+import com.alibaba.cloud.ai.graph.agent.flow.agent.ParallelAgent;
+import com.alibaba.cloud.ai.graph.agent.flow.agent.SequentialAgent;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+
 import org.springframework.ai.chat.model.ChatModel;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
-import com.alibaba.cloud.ai.graph.KeyStrategy;
+
 import com.alibaba.cloud.ai.graph.agent.BaseAgent;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.alibaba.cloud.ai.graph.agent.flow.agent.LlmRoutingAgent;
 import com.alibaba.cloud.ai.graph.exception.GraphStateException;
-import com.alibaba.cloud.ai.a2a.server.config.AgentConfigProperties;
-import com.alibaba.cloud.ai.a2a.server.config.KeyStrategyFactory;
+import com.alibaba.cloud.ai.a2a.server.config.NewAgentConfigProperties;
+import com.alibaba.cloud.ai.a2a.server.config.RuntimeConfigProperties;
+import com.alibaba.cloud.ai.a2a.server.config.LocalKeyStrategyFactory;
 
 import io.a2a.spec.AgentCapabilities;
 import io.a2a.spec.AgentCard;
@@ -34,186 +42,365 @@ public class ServerAgentConfiguration {
     private int port;
 
     @Bean
-    public ChatModel chatModel(AgentConfigProperties config) {
-        return DashScopeChatModel.builder()
-                .dashScopeApi(DashScopeApi.builder().apiKey(config.getDashScope().getApiKey()).build())
-                .build();
+    public ChatModel defaultChatModel(RuntimeConfigProperties runtimeConfig) throws Exception {
+        return generateChatModel(runtimeConfig.getModel());
     }
 
-    @Bean
-    public Map<String, KeyStrategy> keyStrategies(AgentConfigProperties config, KeyStrategyFactory strategyFactory) {
-        Map<String, String> strategyConfigs = config.getKeyStrategies()
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getType()));
-        return strategyFactory.createStrategies(strategyConfigs);
+    private ChatModel generateChatModel(NewAgentConfigProperties.Model modelConfig) throws Exception {
+        if (modelConfig.getApiKey() == null) {
+            throw new Exception("Api key is required");
+        }
+        String apiKey = modelConfig.getApiKey();
+        DashScopeChatModel.Builder modelBuilder = DashScopeChatModel.builder().dashScopeApi(DashScopeApi.builder().apiKey(apiKey).build());
+        DashScopeChatOptions.DashscopeChatOptionsBuilder dashScopeChatOptionsBuilder = DashScopeChatOptions.builder();
+        if (modelConfig.getName() != null) {
+            dashScopeChatOptionsBuilder.withModel(modelConfig.getName());
+        }
+
+        if (modelConfig.getOptions().containsKey("max_tokens")) {
+            dashScopeChatOptionsBuilder.withMaxToken((Integer) modelConfig.getOptions().get("max_tokens"));
+        }
+
+        if (modelConfig.getOptions().containsKey("temperature")) {
+            dashScopeChatOptionsBuilder.withTemperature((Double) modelConfig.getOptions().get("temperature"));
+        }
+
+        if (modelConfig.getOptions().containsKey("top_p")) {
+            dashScopeChatOptionsBuilder.withTopP((Double) modelConfig.getOptions().get("top_p"));
+        }
+
+        if (modelConfig.getOptions().containsKey("top_k")) {
+            dashScopeChatOptionsBuilder.withTopK((Integer) modelConfig.getOptions().get("top_k"));
+        }
+
+        DashScopeChatOptions dashScopeChatOptions = dashScopeChatOptionsBuilder.build();
+        modelBuilder.defaultOptions(dashScopeChatOptions);
+
+        return modelBuilder.build();
     }
 
+
     @Bean
-    public Map<String, BaseAgent> agents(ChatModel chatModel, AgentConfigProperties config) throws GraphStateException {
-        List<AgentConfigProperties.AgentDefinition> definitions = config.getAgents();
+    public Map<String, BaseAgent> agents(ChatModel defaultChatModel, NewAgentConfigProperties config, RuntimeConfigProperties runtimeConfig, LocalKeyStrategyFactory strategyFactory) throws GraphStateException {
+        List<NewAgentConfigProperties.AgentDefinition> definitions = config.getAgents();
         if (definitions == null || definitions.isEmpty()) {
             return new LinkedHashMap<>();
         }
-        return definitions.stream().collect(Collectors.toMap(
-                AgentConfigProperties.AgentDefinition::getName,
-                def -> createAgent(def, chatModel),
-                (a, b) -> a,
-                LinkedHashMap::new
-        ));
+
+        // 创建agents Map和待处理定义Map
+        Map<String, BaseAgent> agents = new LinkedHashMap<>();
+        Map<String, NewAgentConfigProperties.AgentDefinition> remainingDefinitions = new LinkedHashMap<>();
+
+        // 初始化待处理定义Map
+        for (NewAgentConfigProperties.AgentDefinition def : definitions) {
+            remainingDefinitions.put(def.getName(), def);
+        }
+
+        // 多轮构建：每轮都尝试构建所有可以构建的agent
+        int round = 1;
+        while (!remainingDefinitions.isEmpty()) {
+            System.out.println("=== 第 " + round + " 轮构建开始 ===");
+            System.out.println("待构建的agents: " + remainingDefinitions.keySet());
+            System.out.println("已构建的agents: " + agents.keySet());
+
+            boolean progress = false;
+            List<String> agentsToBuildThisRound = new ArrayList<>();
+
+            // 检查每个待构建的agent是否可以构建
+            for (Map.Entry<String, NewAgentConfigProperties.AgentDefinition> entry : remainingDefinitions.entrySet()) {
+                String agentName = entry.getKey();
+                NewAgentConfigProperties.AgentDefinition def = entry.getValue();
+
+                // 检查依赖是否满足
+                if (canBuildAgent(def, agents)) {
+                    agentsToBuildThisRound.add(agentName);
+                    progress = true;
+                } else {
+                    // 显示缺失的依赖
+                    List<String> missingDependencies = getMissingDependencies(def, agents);
+                    System.out.println("Agent '" + agentName + "' 无法构建，缺失依赖: " + missingDependencies);
+                }
+            }
+
+            // 构建这一轮可以构建的所有agent
+            for (String agentName : agentsToBuildThisRound) {
+                NewAgentConfigProperties.AgentDefinition def = remainingDefinitions.get(agentName);
+                System.out.println("正在构建agent: " + agentName);
+
+                try {
+                    BaseAgent agent = createAgent(def, defaultChatModel, runtimeConfig, strategyFactory, agents);
+                    agents.put(agentName, agent);
+                    remainingDefinitions.remove(agentName);
+                    System.out.println("成功构建agent: " + agentName);
+                } catch (Exception e) {
+                    System.err.println("构建agent '" + agentName + "' 失败: " + e.getMessage());
+                    throw new IllegalStateException("Failed to build agent: " + agentName, e);
+                }
+            }
+
+            System.out.println("第 " + round + " 轮构建完成，本轮构建了 " + agentsToBuildThisRound.size() + " 个agent");
+            System.out.println();
+
+            // 如果没有进展，说明存在循环依赖或无法解决的依赖
+            if (!progress) {
+                System.err.println("无法继续构建，剩余agents: " + remainingDefinitions.keySet());
+                for (String agentName : remainingDefinitions.keySet()) {
+                    NewAgentConfigProperties.AgentDefinition def = remainingDefinitions.get(agentName);
+                    List<String> missingDependencies = getMissingDependencies(def, agents);
+                    System.err.println("Agent '" + agentName + "' 的缺失依赖: " + missingDependencies);
+                }
+                throw new IllegalStateException("Circular dependency or unresolved dependencies detected in agent definitions: " + remainingDefinitions.keySet());
+            }
+
+            round++;
+        }
+
+        System.out.println("=== 所有agents构建完成，共构建了 " + agents.size() + " 个agent ===");
+
+        return agents;
     }
 
-    private BaseAgent createAgent(AgentConfigProperties.AgentDefinition def, ChatModel chatModel) {
+    /**
+     * 检查agent是否可以构建（所有依赖都已满足）
+     */
+    private boolean canBuildAgent(NewAgentConfigProperties.AgentDefinition def, Map<String, BaseAgent> existingAgents) {
+        if (def.getSubAgentNames() == null || def.getSubAgentNames().isEmpty()) {
+            return true; // 没有依赖，可以构建
+        }
+
+        // 检查所有subAgents是否都已构建
+        for (String subAgentName : def.getSubAgentNames()) {
+            if (!existingAgents.containsKey(subAgentName)) {
+                return false; // 有依赖未满足
+            }
+        }
+
+        return true; // 所有依赖都已满足
+    }
+
+    /**
+     * 获取agent缺失的依赖列表
+     */
+    private List<String> getMissingDependencies(NewAgentConfigProperties.AgentDefinition def, Map<String, BaseAgent> existingAgents) {
+        List<String> missingDependencies = new ArrayList<>();
+
+        if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
+            for (String subAgentName : def.getSubAgentNames()) {
+                if (!existingAgents.containsKey(subAgentName)) {
+                    missingDependencies.add(subAgentName);
+                }
+            }
+        }
+
+        return missingDependencies;
+    }
+
+    private List<ToolCallback> convertToolCallbacks(List<String> toolNames) {
+        return List.of();
+    }
+
+    private ToolCallbackResolver convertToolCallbackResolver(String resolverName) {
+        return null;
+    }
+
+    //    Todo: 几个hook还没有添加，有一些转换的函数当前是空实现，compileConfig也没有实现
+    private BaseAgent createAgent(NewAgentConfigProperties.AgentDefinition def, ChatModel defaultChatModel, RuntimeConfigProperties runtimeConfig, LocalKeyStrategyFactory strategyFactory, Map<String, BaseAgent> existingAgents) {
         String type = def.getType();
         if (type == null || type.isEmpty()) {
             throw new IllegalArgumentException("Agent type must be provided for agent: " + def.getName());
         }
+
+        // 为这个agent创建专用的ChatModel
+        ChatModel agentChatModel = createAgentChatModel(def, defaultChatModel, runtimeConfig);
+
+        KeyStrategyFactory agentKeyStrategies = createAgentKeyStrategies(def, strategyFactory);
+
         if ("ReactAgent".equals(type)) {
             try {
-                return ReactAgent.builder()
-                        .name(def.getName())
-                        .model(chatModel)
-                        .description(def.getDescription())
-                        .instruction(def.getInstruction())
-                        .outputKey(def.getOutputKey())
-                        .build();
+                ReactAgent.Builder builder = ReactAgent.builder().name(def.getName()).state(agentKeyStrategies).model(agentChatModel);
+
+                if (def.getDescription() != null) {
+                    builder.description(def.getDescription());
+                }
+                if (def.getInstruction() != null) {
+                    builder.instruction(def.getInstruction());
+                }
+                if (def.getOutputKey() != null) {
+                    builder.outputKey(def.getOutputKey());
+                }
+                if (def.getMaxIterations() != null) {
+                    builder.maxIterations(def.getMaxIterations());
+                }
+                if (def.getTools() != null) {
+                    builder.tools(convertToolCallbacks(def.getTools()));
+                }
+                if (def.getResolver() != null) {
+                    builder.resolver(convertToolCallbackResolver(def.getResolver()));
+                }
+                if (def.getInputKey() != null) {
+                    builder.inputKey(def.getInputKey());
+                }
+                if (def.getMaxIterations() != null) {
+                    builder.maxIterations(def.getMaxIterations());
+                }
+                return builder.build();
             } catch (GraphStateException e) {
                 throw new IllegalStateException("Failed to build ReactAgent: " + def.getName(), e);
             }
-        }
+        } else if ("LlmRoutingAgent".equals(type)) {
+            try {
+                LlmRoutingAgent.LlmRoutingAgentBuilder builder = LlmRoutingAgent.builder().name(def.getName()).state(agentKeyStrategies).model(agentChatModel);
 
-        try {
-            Class<?> clazz = resolveAgentClass(type);
-            if (!BaseAgent.class.isAssignableFrom(clazz)) {
-                throw new IllegalArgumentException("Agent type does not extend BaseAgent: " + type);
+                if (def.getDescription() != null) {
+                    builder.description(def.getDescription());
+                }
+                if (def.getOutputKey() != null) {
+                    builder.outputKey(def.getOutputKey());
+                }
+                if (def.getInputKey() != null) {
+                    builder.inputKey(def.getInputKey());
+                }
+                if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
+                    List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
+                        BaseAgent agent = existingAgents.get(name);
+                        if (agent == null) {
+                            throw new IllegalArgumentException("Unknown sub-agent: " + name);
+                        }
+                        return agent;
+                    }).collect(Collectors.toList());
+                    builder.subAgents(subAgents);
+                }
+                return builder.build();
+            } catch (GraphStateException e) {
+                throw new IllegalStateException("Failed to build LlmRoutingAgent: " + def.getName(), e);
             }
-            Method builderMethod = clazz.getMethod("builder");
-            Object builder = builderMethod.invoke(null);
-            invokeIfPresent(builder, "name", new Class[]{String.class}, new Object[]{def.getName()});
-            invokeIfPresent(builder, "model", new Class[]{ChatModel.class}, new Object[]{chatModel});
-            invokeIfPresent(builder, "description", new Class[]{String.class}, new Object[]{def.getDescription()});
-            invokeIfPresent(builder, "instruction", new Class[]{String.class}, new Object[]{def.getInstruction()});
-            invokeIfPresent(builder, "outputKey", new Class[]{String.class}, new Object[]{def.getOutputKey()});
-            Method buildMethod = builder.getClass().getMethod("build");
-            return (BaseAgent) buildMethod.invoke(builder);
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to reflectively build agent: " + def.getName() + " type=" + type, e);
+        } else if ("SequentialAgent".equals(type)) {
+            try {
+                SequentialAgent.SequentialAgentBuilder builder = SequentialAgent.builder().name(def.getName()).state(agentKeyStrategies);
+
+                if (def.getDescription() != null) {
+                    builder.description(def.getDescription());
+                }
+                if (def.getOutputKey() != null) {
+                    builder.outputKey(def.getOutputKey());
+                }
+                if (def.getInputKey() != null) {
+                    builder.inputKey(def.getInputKey());
+                }
+                if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
+                    List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
+                        BaseAgent agent = existingAgents.get(name);
+                        if (agent == null) {
+                            throw new IllegalArgumentException("Unknown sub-agent: " + name);
+                        }
+                        return agent;
+                    }).collect(Collectors.toList());
+                    builder.subAgents(subAgents);
+                }
+                return builder.build();
+            } catch (GraphStateException e) {
+                throw new IllegalStateException("Failed to build SequentialAgent: " + def.getName(), e);
+            }
+        }
+
+//        Todo: 这个ParallelAgent的逻辑还没有看懂
+        else if ("ParallelAgent".equals(type)) {
+            try {
+                ParallelAgent.ParallelAgentBuilder builder = ParallelAgent.builder().name(def.getName()).state(agentKeyStrategies);
+
+                if (def.getDescription() != null) {
+                    builder.description(def.getDescription());
+                }
+                if (def.getOutputKey() != null) {
+                    builder.outputKey(def.getOutputKey());
+                }
+                if (def.getInputKey() != null) {
+                    builder.inputKey(def.getInputKey());
+                }
+                if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
+                    List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
+                        BaseAgent agent = existingAgents.get(name);
+                        if (agent == null) {
+                            throw new IllegalArgumentException("Unknown sub-agent: " + name);
+                        }
+                        return agent;
+                    }).collect(Collectors.toList());
+                    builder.subAgents(subAgents);
+                }
+                return builder.build();
+            } catch (GraphStateException e) {
+                throw new IllegalStateException("Failed to build ParallelAgent: " + def.getName(), e);
+            }
+        } else {
+            throw new IllegalStateException("Unsupported agent type: " + type);
         }
     }
 
-    private static Class<?> resolveAgentClass(String type) throws ClassNotFoundException {
-        if (type.indexOf('.') < 0) {
-            String fqn = "com.alibaba.cloud.ai.graph.agent." + type;
-            return Class.forName(fqn);
+    private ChatModel createAgentChatModel(NewAgentConfigProperties.AgentDefinition def, ChatModel defaultChatModel, RuntimeConfigProperties runtimeConfig) {
+        if (def.getModel() != null) {
+            System.out.println("为agent '" + def.getName() + "' 使用自定义模型配置");
+            try {
+                return generateChatModel(def.getModel());
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to create ChatModel for agent: " + def.getName(), e);
+            }
         }
-        return Class.forName(type);
+
+        // 使用默认的ChatModel
+        return defaultChatModel;
     }
 
-    private static void invokeIfPresent(Object target, String methodName, Class<?>[] paramTypes, Object[] args) {
-        try {
-            Method m = target.getClass().getMethod(methodName, paramTypes);
-            m.invoke(target, args);
-        } catch (NoSuchMethodException ignored) {
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to invoke builder method: " + methodName, e);
-        }
-    }
+    private KeyStrategyFactory createAgentKeyStrategies(NewAgentConfigProperties.AgentDefinition def, LocalKeyStrategyFactory strategyFactory) {
+        Map<String, String> strategyConfigs = new LinkedHashMap<>();
 
+        if (def.getState() != null && def.getState().getStrategies() != null) {
+            strategyConfigs.putAll(def.getState().getStrategies());
+        }
+
+        return strategyFactory.createStrategies(strategyConfigs);
+    }
 
     @Bean
-    @Primary
-    public BaseAgent rootAgent(ChatModel chatModel, Map<String, KeyStrategy> keyStrategies,
-                               Map<String, BaseAgent> agents, AgentConfigProperties config) throws GraphStateException {
-        AgentConfigProperties.RootAgent rootConfig = config.getRootAgent();
-        String type = rootConfig.getType() == null || rootConfig.getType().isEmpty() ? "LlmRoutingAgent" : rootConfig.getType();
+    public BaseAgent rootAgent(Map<String, BaseAgent> agents, NewAgentConfigProperties config) throws GraphStateException {
+        // 从配置中查找根agent
+        NewAgentConfigProperties.AgentDefinition rootAgentDef = config.getAgents().stream().filter(agent -> Boolean.TRUE.equals(agent.getIsRoot())).findFirst().orElse(null);
 
-        List<String> subAgentNames = rootConfig.getSubAgentNames();
-        List<BaseAgent> subAgents = subAgentNames == null ? List.of() : subAgentNames.stream()
-                .map(name -> {
-                    BaseAgent agent = agents.get(name);
-                    if (agent == null) {
-                        throw new IllegalArgumentException("Unknown sub-agent: " + name);
-                    }
-                    return agent;
-                })
-                .collect(Collectors.toList());
-
-        if ("LlmRoutingAgent".equals(type)) {
-            return LlmRoutingAgent.builder()
-                    .name(rootConfig.getName())
-                    .model(chatModel)
-                    .state(() -> keyStrategies)
-                    .inputKey(rootConfig.getInputKey())
-                    .outputKey(rootConfig.getOutputKey())
-                    .subAgents(subAgents)
-                    .build();
+        if (rootAgentDef == null) {
+            throw new IllegalStateException("No root agent found in configuration");
         }
 
-        try {
-            Class<?> clazz = resolveAgentClass(type.indexOf('.') < 0 ? "com.alibaba.cloud.ai.graph.agent.flow." + type : type);
-            if (!BaseAgent.class.isAssignableFrom(clazz)) {
-                throw new IllegalArgumentException("Root agent type does not extend BaseAgent: " + type);
-            }
-            Method builderMethod = clazz.getMethod("builder");
-            Object builder = builderMethod.invoke(null);
-            invokeIfPresent(builder, "name", new Class[]{String.class}, new Object[]{rootConfig.getName()});
-            invokeIfPresent(builder, "model", new Class[]{ChatModel.class}, new Object[]{chatModel});
-            invokeIfPresent(builder, "state", new Class[]{com.alibaba.cloud.ai.graph.KeyStrategyFactory.class}, new Object[]{(com.alibaba.cloud.ai.graph.KeyStrategyFactory) () -> keyStrategies});
-            invokeIfPresent(builder, "inputKey", new Class[]{String.class}, new Object[]{rootConfig.getInputKey()});
-            invokeIfPresent(builder, "outputKey", new Class[]{String.class}, new Object[]{rootConfig.getOutputKey()});
-            invokeIfPresent(builder, "subAgents", new Class[]{List.class}, new Object[]{subAgents});
-            Method buildMethod = builder.getClass().getMethod("build");
-            return (BaseAgent) buildMethod.invoke(builder);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to build root agent type=" + type, e);
+        // 根agent已经在agents Map中创建了，直接返回
+        BaseAgent rootAgent = agents.get(rootAgentDef.getName());
+        if (rootAgent == null) {
+            throw new IllegalStateException("Root agent not found in agents map: " + rootAgentDef.getName());
         }
+
+        return rootAgent;
     }
 
     @Bean
-    public AgentCard agentCard(AgentConfigProperties config) {
-        AgentConfigProperties.RootAgent rootAgent = config.getRootAgent();
-        List<AgentConfigProperties.AgentDefinition> agents = config.getAgents();
+    public AgentCard agentCard(NewAgentConfigProperties config) {
+        List<NewAgentConfigProperties.AgentDefinition> agents = config.getAgents();
+        NewAgentConfigProperties.AgentDefinition rootAgent = agents.stream().filter(agent -> Boolean.TRUE.equals(agent.getIsRoot())).findFirst().orElse(null);
+
         List<AgentSkill> skills = generateSkillsFromAgents(agents);
         String description = generateDescriptionFromRootAgent(rootAgent, agents);
         String name = generateNameFromRootAgent(rootAgent);
 
-        return new AgentCard.Builder()
-                .name(name)
-                .description(description)
-                .url(String.format("http://localhost:%d/a2a/", port)) // 默认URL
-                .version("1.0.0")
-                .documentationUrl("")
-                .capabilities(new AgentCapabilities.Builder()
-                        .streaming(true)
-                        .pushNotifications(true)
-                        .stateTransitionHistory(true)
-                        .build())
-                .defaultInputModes(List.of("text"))
-                .defaultOutputModes(List.of("text"))
-                .skills(skills)
-                .protocolVersion("0.2.5")
-                .build();
+        return new AgentCard.Builder().name(name).description(description).url(String.format("http://localhost:%d/a2a/", port)) // 默认URL
+                .version("1.0.0").documentationUrl("").capabilities(new AgentCapabilities.Builder().streaming(true).pushNotifications(true).stateTransitionHistory(true).build()).defaultInputModes(List.of("text")).defaultOutputModes(List.of("text")).skills(skills).protocolVersion("0.2.5").build();
     }
 
-    private List<AgentSkill> generateSkillsFromAgents(List<AgentConfigProperties.AgentDefinition> agents) {
+    private List<AgentSkill> generateSkillsFromAgents(List<NewAgentConfigProperties.AgentDefinition> agents) {
         if (agents == null || agents.isEmpty()) {
             return List.of();
         }
 
-        return agents.stream()
-                .map(agent -> new AgentSkill.Builder()
-                        .id(agent.getName() + "_skill")
-                        .name(agent.getName())
-                        .description(agent.getDescription())
-                        .tags(List.of(agent.getType().toLowerCase()))
-                        .examples(generateExamplesFromAgent(agent))
-                        .build())
-                .collect(Collectors.toList());
+        return agents.stream().filter(agent -> !Boolean.TRUE.equals(agent.getIsRoot())) // 排除根agent
+                .map(agent -> new AgentSkill.Builder().id(agent.getName() + "_skill").name(agent.getName()).description(agent.getDescription()).tags(List.of(agent.getType().toLowerCase())).examples(generateExamplesFromAgent(agent)).build()).collect(Collectors.toList());
     }
 
-    private List<String> generateExamplesFromAgent(AgentConfigProperties.AgentDefinition agent) {
+    private List<String> generateExamplesFromAgent(NewAgentConfigProperties.AgentDefinition agent) {
         List<String> examples = new ArrayList<>();
 
         examples.add("使用" + agent.getName() + "处理任务");
@@ -221,8 +408,7 @@ public class ServerAgentConfiguration {
         return examples;
     }
 
-    private String generateDescriptionFromRootAgent(AgentConfigProperties.RootAgent rootAgent,
-                                                    List<AgentConfigProperties.AgentDefinition> agents) {
+    private String generateDescriptionFromRootAgent(NewAgentConfigProperties.AgentDefinition rootAgent, List<NewAgentConfigProperties.AgentDefinition> agents) {
         if (rootAgent == null) {
             return "AI代理服务";
         }
@@ -230,7 +416,7 @@ public class ServerAgentConfiguration {
         return rootAgent.getDescription();
     }
 
-    private String generateNameFromRootAgent(AgentConfigProperties.RootAgent rootAgent) {
+    private String generateNameFromRootAgent(NewAgentConfigProperties.AgentDefinition rootAgent) {
         if (rootAgent == null) {
             return "AI Agent Service";
         }
