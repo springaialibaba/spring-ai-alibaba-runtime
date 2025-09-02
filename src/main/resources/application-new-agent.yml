@@ -1,0 +1,100 @@
+agents: # ReactAgent/SequentialAgent/LlmRoutingAgent/
+  - name: "prose_writer_agent"
+    type: "ReactAgent"
+    description: "可以写各种散文"
+    input_key: "messages"
+    outputKey: "messages"
+
+    instruction: "你是一个专业的作家，擅长写各种散文。请根据用户的要求创作高质量的散文。"
+    max_iterations: 6
+
+    tools: [ ]            # 工具名或 ToolCallback bean 名，当前预留
+    resolver: toolCallbackResolver    # 存在时优先于 tools
+
+    chat_options: { }                  # 预留 Builder.chatOptions
+    compile_config: { }              # 预留 Builder.compileConfig
+
+    state:
+      strategies:
+        messages: append
+        response: replace
+
+    hooks: # 预留
+      pre_llm: [ ]
+      post_llm: [ ]
+      pre_tool: [ ]
+      post_tool: [ ]
+
+    model:
+      provider: dashscope
+      name: qwen-max
+      apiKey: ${API_KEY}
+      options:
+        temperature: 0.3
+        top_p: 0.9
+        max_tokens: 4096
+        top_k: 1
+        chat_client_bean: optional_bean_name  # Spring Bean 覆盖入口
+
+
+  - name: "poem_writer_agent"
+    type: "ReactAgent"
+    description: "可以写各种诗歌"
+    input_key: "messages"
+    outputKey: "messages"
+
+    instruction: "你是一个专业的作家，擅长写各种诗歌。请根据用户的要求创作高质量的诗歌。"
+    max_iterations: 6
+
+    tools: [ ]            # 工具名或 ToolCallback bean 名，当前预留
+    resolver: toolCallbackResolver    # 存在时优先于 tools
+
+    chat_options: { }                  # 预留 Builder.chatOptions
+    compile_config: { }              # 预留 Builder.compileConfig
+
+    state:
+      strategies:
+        messages: append
+        response: replace
+
+    hooks: # 预留
+      pre_llm: [ ]
+      post_llm: [ ]
+      pre_tool: [ ]
+      post_tool: [ ]
+
+
+  - name: "blog_agent"
+    type: "LlmRoutingAgent"
+    isRoot: true
+    description: "博客写作代理"
+    input_key: "input"
+    outputKey: "topic"
+
+    instruction: "博客写作代理"
+    max_iterations: 6
+
+    tools: [ ]            # 工具名或 ToolCallback bean 名，当前预留
+    resolver: toolCallbackResolver    # 存在时优先于 tools
+
+    chat_options: { }                  # 预留 Builder.chatOptions
+    compile_config: { }              # 预留 Builder.compileConfig
+
+    state:
+      strategies:
+        input: replace
+        output: replace
+
+    hooks: # 预留
+      pre_llm: [ ]
+      post_llm: [ ]
+      pre_tool: [ ]
+      post_tool: [ ]
+
+    subAgentNames:
+      - "prose_writer_agent"
+      - "poem_writer_agent"
+
+registry:
+  type: "nacos"
+
