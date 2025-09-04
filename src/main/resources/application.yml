@@ -7,6 +7,7 @@ spring:
       - classpath:application-nacos.yml
       - classpath:application-new-agent.yml
       - classpath:application-runtime.yml
+      - classpath:application-memory.yml
   application:
     name: spring-ai-alibaba-a2a-server
 

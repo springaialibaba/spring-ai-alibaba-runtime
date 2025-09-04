@@ -1,0 +1,41 @@
+# 记忆服务配置示例
+memory:
+  service:
+    # 服务类型：memory（内存）或 redis
+    type: memory
+    # 是否自动启动记忆服务
+    auto-start: true
+    # 是否在启动时执行健康检查
+    health-check-on-start: true
+    # 默认会话ID
+    default-session-id: "default"
+    # 搜索时的默认top_k值
+    default-top-k: 5
+    # 分页时的默认页面大小
+    default-page-size: 10
+
+# 会话服务配置
+session:
+  service:
+    # 服务类型：memory（内存）或 redis
+    type: memory
+
+# Redis配置（当使用Redis存储时）
+# spring:
+#   data:
+#     redis:
+#       host: localhost
+#       port: 6379
+#       database: 0
+#       timeout: 2000ms
+#       lettuce:
+#         pool:
+#           max-active: 8
+#           max-idle: 8
+#           min-idle: 0
+#           max-wait: -1ms
+
+# 日志配置
+logging:
+  level:
+    com.alibaba.cloud.ai.a2a.server.memory: INFO
