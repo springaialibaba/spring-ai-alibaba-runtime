@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import java.util.ArrayList;
 
+import com.alibaba.cloud.ai.a2a.server.tools.ToolsInit;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.alibaba.cloud.ai.graph.KeyStrategyFactory;
 import com.alibaba.cloud.ai.graph.agent.flow.agent.ParallelAgent;
@@ -40,6 +41,12 @@ public class ServerAgentConfiguration {
 
     @Value("${server.port:10000}")
     private int port;
+
+    ToolsInit toolsInit;
+
+    public ServerAgentConfiguration(ToolsInit toolsInit) {
+        this.toolsInit = toolsInit;
+    }
 
     @Bean
     public ChatModel defaultChatModel(RuntimeConfigProperties runtimeConfig) throws Exception {
@@ -243,6 +250,7 @@ public class ServerAgentConfiguration {
                 if (def.getMaxIterations() != null) {
                     builder.maxIterations(def.getMaxIterations());
                 }
+                builder.tools(toolsInit.getTools());
                 return builder.build();
             } catch (GraphStateException e) {
                 throw new IllegalStateException("Failed to build ReactAgent: " + def.getName(), e);
