@@ -49,7 +49,6 @@ public class InMemorySessionHistoryService implements SessionHistoryService {
                     .get(sessionId);
             
             if (session == null) {
-                // 如果会话不存在，创建一个新的
                 session = new Session(sessionId, userId, new ArrayList<>());
                 sessions.computeIfAbsent(userId, k -> new ConcurrentHashMap<>())
                         .put(sessionId, session);

@@ -54,20 +54,19 @@ public class GraphAgentExecutor implements AgentExecutor {
         try {
             Message message = context.getParams().message();
             // 准备/创建会话
-            String contextId = message.getContextId() == null || message.getContextId().isEmpty()
-                    ? java.util.UUID.randomUUID().toString()
-                    : message.getContextId();
-            Session session = sessionHistoryService.getSession(contextId, contextId).join().orElse(sessionHistoryService.createSession(contextId, java.util.Optional.of(contextId)).join());
+            String contextId = getContextId(message);
+            String userId = getUserId(message);
+            Session session = sessionHistoryService.getSession(userId, contextId).join().orElse(sessionHistoryService.createSession(userId, java.util.Optional.of(contextId)).join());
 
             // 记录用户输入到会话与长期记忆
             com.alibaba.cloud.ai.a2a.server.memory.Message userMsg = buildTextMessage(getTextFromMessageParts(message));
             sessionHistoryService.appendMessage(session, java.util.List.of(userMsg));
-            memoryService.addMemory(contextId, java.util.List.of(userMsg), java.util.Optional.of(contextId));
+            memoryService.addMemory(userId, java.util.List.of(userMsg), java.util.Optional.of(contextId));
 
             String inputText = getTextFromMessageParts(message);
             // 检索相关记忆并拼接到输入前缀
             java.util.List<com.alibaba.cloud.ai.a2a.server.memory.Message> retrieved = memoryService.searchMemory(
-                    contextId,
+                    userId,
                     java.util.List.of(userMsg),
                     java.util.Optional.of(java.util.Map.of("top_k", 5))
             ).join();
@@ -97,16 +96,30 @@ public class GraphAgentExecutor implements AgentExecutor {
             }
 
             // 将最终助手输出写入会话与长期记忆
-            if (accumulatedOutput.length() > 0) {
+            if (!accumulatedOutput.isEmpty()) {
                 com.alibaba.cloud.ai.a2a.server.memory.Message assistantMsg = buildTextMessage(accumulatedOutput.toString());
                 sessionHistoryService.appendMessage(session, java.util.List.of(assistantMsg));
-                memoryService.addMemory(contextId, java.util.List.of(assistantMsg), java.util.Optional.of(contextId));
+                memoryService.addMemory(userId, java.util.List.of(assistantMsg), java.util.Optional.of(contextId));
             }
 
         } catch (Exception e) {
             LOGGER.error("Agent execution failed", e);
             eventQueue.enqueueEvent(A2A.toAgentMessage("Agent execution failed: " + e.getMessage()));
         }
+    }
+
+    private String getUserId(Message message) {
+        if (message.getMetadata() != null && message.getMetadata().containsKey("userId")) {
+            return String.valueOf(message.getMetadata().get("userId"));
+        }
+        return "default_user";
+    }
+
+    private String getContextId(Message message) {
+        if (message.getContextId() != null && !message.getContextId().isEmpty()) {
+            return message.getContextId();
+        }
+        return "default_context";
     }
 
     /**

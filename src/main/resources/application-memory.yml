@@ -1,8 +1,8 @@
-# 记忆服务配置示例
+# MySQL记忆服务配置示例
 memory:
   service:
-    # 服务类型：memory（内存）或 redis
-    type: memory
+    # 服务类型：memory（内存）、redis 或 mysql
+    type: mysql
     # 是否自动启动记忆服务
     auto-start: true
     # 是否在启动时执行健康检查
@@ -17,9 +17,39 @@ memory:
 # 会话服务配置
 session:
   service:
-    # 服务类型：memory（内存）或 redis
-    type: memory
+    # 服务类型：memory（内存）、redis 或 mysql
+    type: mysql
 
+# MySQL数据库配置
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/memory_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
+    username: root
+    password: xht20040828
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+  sql:
+    init:
+      mode: never
+      
+      
 # Redis配置（当使用Redis存储时）
 # spring:
 #   data:
@@ -35,7 +65,12 @@ session:
 #           min-idle: 0
 #           max-wait: -1ms
 
+
+# 使用memory存储的时候什么都不需要配置
+
 # 日志配置
 logging:
   level:
     com.alibaba.cloud.ai.a2a.server.memory: INFO
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
