@@ -15,6 +15,7 @@ import io.a2a.server.agentexecution.RequestContext;
 import io.a2a.server.events.EventQueue;
 import io.a2a.server.tasks.TaskUpdater;
 import io.a2a.spec.*;
+import org.hibernate.sql.ast.tree.expression.Over;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -54,14 +55,14 @@ public class GraphAgentExecutor implements AgentExecutor {
         try {
             Message message = context.getParams().message();
             // 准备/创建会话
-            String contextId = getContextId(message);
+            String sessionId = getSessionId(message);
             String userId = getUserId(message);
-            Session session = sessionHistoryService.getSession(userId, contextId).join().orElse(sessionHistoryService.createSession(userId, java.util.Optional.of(contextId)).join());
+            Session session = sessionHistoryService.getSession(userId, sessionId).join().orElse(sessionHistoryService.createSession(userId, java.util.Optional.of(sessionId)).join());
 
             // 记录用户输入到会话与长期记忆
             com.alibaba.cloud.ai.a2a.server.memory.Message userMsg = buildTextMessage(getTextFromMessageParts(message));
             sessionHistoryService.appendMessage(session, java.util.List.of(userMsg));
-            memoryService.addMemory(userId, java.util.List.of(userMsg), java.util.Optional.of(contextId));
+            memoryService.addMemory(userId, java.util.List.of(userMsg), java.util.Optional.of(sessionId));
 
             String inputText = getTextFromMessageParts(message);
             // 检索相关记忆并拼接到输入前缀
@@ -72,9 +73,10 @@ public class GraphAgentExecutor implements AgentExecutor {
             ).join();
             String retrievedText = formatRetrievedText(retrieved);
             String finalInput = retrievedText.isEmpty() ? inputText : (retrievedText + "\n\n" + inputText);
-            Map<String, Object> input = Map.of("input", finalInput);
+            Map<String, Object> input = Map.of("input", finalInput, "userId", userId, "sessionId", sessionId);
 
             AsyncGenerator<NodeOutput> resultFuture = ExecuteAgent.stream(input);
+
 
             Task task = context.getTask();
             if (task == null) {
@@ -85,7 +87,7 @@ public class GraphAgentExecutor implements AgentExecutor {
 
             StringBuilder accumulatedOutput = new StringBuilder();
             try {
-                processStreamingOutput(resultFuture, taskUpdater, accumulatedOutput);
+                processStreamingOutput(resultFuture, taskUpdater, accumulatedOutput, sessionId, userId);
             } catch (Exception e) {
                 LOGGER.error("Error processing streaming output", e);
                 taskUpdater.startWork(taskUpdater.newAgentMessage(
@@ -99,7 +101,7 @@ public class GraphAgentExecutor implements AgentExecutor {
             if (!accumulatedOutput.isEmpty()) {
                 com.alibaba.cloud.ai.a2a.server.memory.Message assistantMsg = buildTextMessage(accumulatedOutput.toString());
                 sessionHistoryService.appendMessage(session, java.util.List.of(assistantMsg));
-                memoryService.addMemory(userId, java.util.List.of(assistantMsg), java.util.Optional.of(contextId));
+                memoryService.addMemory(userId, java.util.List.of(assistantMsg), java.util.Optional.of(sessionId));
             }
 
         } catch (Exception e) {
@@ -115,19 +117,18 @@ public class GraphAgentExecutor implements AgentExecutor {
         return "default_user";
     }
 
-    private String getContextId(Message message) {
-        if (message.getContextId() != null && !message.getContextId().isEmpty()) {
-            return message.getContextId();
+    private String getSessionId(Message message) {
+        if (message.getMetadata() != null && message.getMetadata().containsKey("sessionId")) {
+            return String.valueOf(message.getMetadata().get("sessionId"));
         }
-        return "default_context";
+        return "default_session";
     }
 
     /**
      * 处理流式输出数据
      */
-    private void processStreamingOutput(AsyncGenerator<NodeOutput> streamGenerator, TaskUpdater taskUpdater, StringBuilder accumulatedOutput) {
+    private void processStreamingOutput(AsyncGenerator<NodeOutput> streamGenerator, TaskUpdater taskUpdater, StringBuilder accumulatedOutput, String sessionId, String userId) {
         try {
-
             streamGenerator.forEachAsync(output -> {
                 try {
                     LOGGER.info("处理output: {}", output);
@@ -138,7 +139,10 @@ public class GraphAgentExecutor implements AgentExecutor {
                         if (content != null && !content.isEmpty()) {
                             taskUpdater.startWork(taskUpdater.newAgentMessage(
                                     List.of(new TextPart(content)),
-                                    Map.of()
+                                    Map.of(
+                                            "userId", userId,
+                                            "sessionId", sessionId
+                                    )
                             ));
                             accumulatedOutput.append(content);
                         }
@@ -159,7 +163,6 @@ public class GraphAgentExecutor implements AgentExecutor {
                     }
                 } catch (Exception e) {
                     LOGGER.error("处理单个output时发生错误", e);
-                    // 继续处理下一个，不要因为单个错误就终止
                 }
             }).thenAccept(v -> taskUpdater.complete()).exceptionally(e -> {
                 LOGGER.error("流式处理发生错误", e);

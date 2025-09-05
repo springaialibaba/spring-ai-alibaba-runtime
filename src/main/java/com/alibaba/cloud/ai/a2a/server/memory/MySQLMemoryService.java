@@ -117,11 +117,6 @@ public class MySQLMemoryService implements MemoryService {
                 // 获取用户所有记忆
                 List<MemoryEntity> allMemories = memoryRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
-                System.out.println("用户 " + userId + " 共有 " + allMemories.size() + " 条记忆");
-                for(MemoryEntity me : allMemories){
-                    System.out.println("记忆ID: " + me.getId() + ", 内容: " + me.getContent());
-                }
-
                 // 计算相似度并排序
                 List<MemorySimilarity> similarities = allMemories.stream()
                     .filter(memory -> memory.getEmbedding() != null && !memory.getEmbedding().trim().isEmpty())
