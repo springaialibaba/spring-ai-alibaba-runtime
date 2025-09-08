@@ -20,10 +20,7 @@ package runtime.domain.tools.service;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.metadata.ToolMetadata;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.ResponseErrorHandler;
-import org.springframework.web.client.RestClient;
 
 import java.util.List;
 
@@ -35,71 +32,40 @@ import java.util.List;
 @Component
 public class ToolsInit {
 
-	@Value("${baidu.translate.ak:tmp}")
-	private String ak;
-
-	@Value("${baidu.translate.sk:tmp}")
-	private String sk;
-
-	@Value("${baidu.map.ak:tmp}")
-	private String mapAK;
-
-	private final RestClient.Builder restClientbuilder;
-
-	private final ResponseErrorHandler responseErrorHandler;
-
-	public ToolsInit(RestClient.Builder restClientbuilder, ResponseErrorHandler responseErrorHandler) {
-
-		this.restClientbuilder = restClientbuilder;
-		this.responseErrorHandler = responseErrorHandler;
-	}
-
 	public List<ToolCallback> getTools() {
-
-		return List.of(buildMathCalculatorTools(),RunPythonCodeTools());
+		return List.of(
+			RunPythonCodeTools(),
+			RunShellCommandTools(),
+			ReadFileTool(),
+			ReadMultipleFilesTool(),
+			WriteFileTool(),
+			EditFileTool(),
+			CreateDirectoryTool(),
+			ListDirectoryTool(),
+			DirectoryTreeTool(),
+			MoveFileTool(),
+			SearchFilesTool(),
+			GetFileInfoTool(),
+			ListAllowedDirectoriesTool(),
+			BrowserNavigateTool(),
+			BrowserClickTool(),
+			BrowserTypeTool(),
+			BrowserTakeScreenshotTool(),
+			BrowserSnapshotTool(),
+			BrowserTabNewTool(),
+			BrowserTabSelectTool(),
+			BrowserTabCloseTool(),
+			BrowserWaitForTool(),
+			BrowserResizeTool(),
+			BrowserCloseTool()
+		);
 	}
-
-	private ToolCallback buildMathCalculatorTools() {
-
-		return FunctionToolCallback
-				.builder(
-						"MathCalculatorService",
-						new MathCalculatorTools()
-				).description("Perform basic mathematical calculations including addition, subtraction, multiplication, division, power, and modulo operations.")
-				.inputSchema(
-						"""
-								{
-									"type": "object",
-									"properties": {
-										"number1": {
-											"type": "number",
-											"description": "第一个数字"
-										},
-										"number2": {
-											"type": "number",
-											"description": "第二个数字"
-										},
-										"operation": {
-											"type": "string",
-											"description": "运算类型: add(加法), subtract(减法), multiply(乘法), divide(除法), power(幂运算), modulo(取模)"
-										}
-									},
-									"required": ["number1", "number2", "operation"],
-									"description": "Request object to perform mathematical calculations"
-								}
-								"""
-				).inputType(MathCalculatorTools.MathCalculatorToolRequest.class)
-				.toolMetadata(ToolMetadata.builder().returnDirect(false).build())
-				.build();
-	}
-
 
     private ToolCallback RunPythonCodeTools() {
-
         return FunctionToolCallback
                 .builder(
                         "PythonExecuteService",
-                        new RunPythonTools()
+                        new RunPythonTool()
                 ).description("Execute Python code snippets and return the output or errors.")
                 .inputSchema(
                         """
@@ -107,15 +73,465 @@ public class ToolsInit {
                                     "type": "object",
                                     "properties": {
                                         "code": {
-                                            "type": "String",
-                                            "description": "Python代码"
+                                            "type": "string",
+                                            "description": "Python code to be executed"
                                         }
                                     },
                                     "required": ["code"],
                                     "description": "Request object to perform Python code execution"
                                 }
                                 """
-                ).inputType(RunPythonTools.RunPythonToolRequest.class)
+                ).inputType(RunPythonTool.RunPythonToolRequest.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback RunShellCommandTools() {
+        return FunctionToolCallback
+                .builder(
+                        "ShellExecuteService",
+                        new RunShellCommandTool()
+                ).description("Execute shell commands and return the output or errors.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "command": {
+                                            "type": "string",
+                                            "description": "Shell command to be executed"
+                                        }
+                                    },
+                                    "required": ["command"],
+                                    "description": "Request object to perform shell execution"
+                                }
+                                """
+                ).inputType(RunShellCommandTool.RunShellCommandToolRequest.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback ReadFileTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSReadFileService",
+                        new runtime.domain.tools.service.fs.ReadFileTool()
+                ).description("Read the complete contents of a file.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string", "description": "Path to the file to read"}
+                                    },
+                                    "required": ["path"],
+                                    "description": "Filesystem read file request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.ReadFileTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback ReadMultipleFilesTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSReadMultipleFilesService",
+                        new runtime.domain.tools.service.fs.ReadMultipleFilesTool()
+                ).description("Read the contents of multiple files simultaneously.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "paths": {"type": "array", "items": {"type": "string"}, "description": "Paths to files"}
+                                    },
+                                    "required": ["paths"],
+                                    "description": "Filesystem read multiple files request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.ReadMultipleFilesTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback WriteFileTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSWriteFileService",
+                        new runtime.domain.tools.service.fs.WriteFileTool()
+                ).description("Create a new file or overwrite an existing file with new content.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string", "description": "Path to the file to write to"},
+                                        "content": {"type": "string", "description": "Content to write"}
+                                    },
+                                    "required": ["path", "content"],
+                                    "description": "Filesystem write file request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.WriteFileTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback EditFileTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSEditFileService",
+                        new runtime.domain.tools.service.fs.EditFileTool()
+                ).description("Make line-based edits to a text file.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string"},
+                                        "edits": {"type": "array", "items": {"type": "object", "properties": {"oldText": {"type": "string"}, "newText": {"type": "string"}}, "required": ["oldText", "newText"], "additionalProperties": false}}
+                                    },
+                                    "required": ["path", "edits"],
+                                    "description": "Filesystem edit file request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.EditFileTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback CreateDirectoryTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSCreateDirectoryService",
+                        new runtime.domain.tools.service.fs.CreateDirectoryTool()
+                ).description("Create a new directory or ensure a directory exists.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string"}
+                                    },
+                                    "required": ["path"],
+                                    "description": "Filesystem create directory request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.CreateDirectoryTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback ListDirectoryTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSListDirectoryService",
+                        new runtime.domain.tools.service.fs.ListDirectoryTool()
+                ).description("Get a detailed listing of all files and directories in a specified path.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string"}
+                                    },
+                                    "required": ["path"],
+                                    "description": "Filesystem list directory request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.ListDirectoryTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback DirectoryTreeTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSDirectoryTreeService",
+                        new runtime.domain.tools.service.fs.DirectoryTreeTool()
+                ).description("Get a recursive tree view of files and directories as a JSON structure.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string"}
+                                    },
+                                    "required": ["path"],
+                                    "description": "Filesystem directory tree request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.DirectoryTreeTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback MoveFileTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSMoveFileService",
+                        new runtime.domain.tools.service.fs.MoveFileTool()
+                ).description("Move or rename files and directories.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "source": {"type": "string"},
+                                        "destination": {"type": "string"}
+                                    },
+                                    "required": ["source", "destination"],
+                                    "description": "Filesystem move file request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.MoveFileTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback SearchFilesTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSSearchFilesService",
+                        new runtime.domain.tools.service.fs.SearchFilesTool()
+                ).description("Recursively search for files and directories matching a pattern.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string"},
+                                        "pattern": {"type": "string"},
+                                        "excludePatterns": {"type": "array", "items": {"type": "string"}}
+                                    },
+                                    "required": ["path", "pattern"],
+                                    "description": "Filesystem search files request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.SearchFilesTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback GetFileInfoTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSGetFileInfoService",
+                        new runtime.domain.tools.service.fs.GetFileInfoTool()
+                ).description("Retrieve detailed metadata about a file or directory.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {"type": "string"}
+                                    },
+                                    "required": ["path"],
+                                    "description": "Filesystem get file info request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.GetFileInfoTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback ListAllowedDirectoriesTool() {
+        return FunctionToolCallback
+                .builder(
+                        "FSListAllowedDirectoriesService",
+                        new runtime.domain.tools.service.fs.ListAllowedDirectoriesTool()
+                ).description("Returns the list of directories that this server is allowed to access.")
+                .inputSchema(
+                        """
+                                {
+                                    "type": "object",
+                                    "properties": {},
+                                    "required": [],
+                                    "description": "Filesystem list allowed directories request"
+                                }
+                                """
+                ).inputType(runtime.domain.tools.service.fs.ListAllowedDirectoriesTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    // Browser tools
+    private ToolCallback BrowserNavigateTool() {
+        return FunctionToolCallback.builder(
+                "BrowserNavigateService",
+                new runtime.domain.tools.service.browser.NavigateTool()
+        ).description("Navigate to a URL")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {"url": {"type": "string"}},
+                            "required": ["url"],
+                            "description": "Browser navigate request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.NavigateTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserClickTool() {
+        return FunctionToolCallback.builder(
+                "BrowserClickService",
+                new runtime.domain.tools.service.browser.ClickTool()
+        ).description("Perform click on a web page")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {"element": {"type": "string"}, "ref": {"type": "string"}},
+                            "required": ["element", "ref"],
+                            "description": "Browser click request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.ClickTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserTypeTool() {
+        return FunctionToolCallback.builder(
+                "BrowserTypeService",
+                new runtime.domain.tools.service.browser.TypeTool()
+        ).description("Type text into an element")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "element": {"type": "string"},
+                                "ref": {"type": "string"},
+                                "text": {"type": "string"},
+                                "submit": {"type": "boolean"},
+                                "slowly": {"type": "boolean"}
+                            },
+                            "required": ["element", "ref", "text"],
+                            "description": "Browser type request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.TypeTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserTakeScreenshotTool() {
+        return FunctionToolCallback.builder(
+                "BrowserTakeScreenshotService",
+                new runtime.domain.tools.service.browser.TakeScreenshotTool()
+        ).description("Take a screenshot of the current page")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "raw": {"type": "boolean"},
+                                "filename": {"type": "string"},
+                                "element": {"type": "string"},
+                                "ref": {"type": "string"}
+                            },
+                            "required": [],
+                            "description": "Browser take screenshot request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.TakeScreenshotTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserSnapshotTool() {
+        return FunctionToolCallback.builder(
+                "BrowserSnapshotService",
+                new runtime.domain.tools.service.browser.SnapshotTool()
+        ).description("Capture accessibility snapshot of the current page")
+                .inputSchema("""
+                        {"type": "object", "properties": {}, "required": [], "description": "Browser snapshot request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.SnapshotTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserTabNewTool() {
+        return FunctionToolCallback.builder(
+                "BrowserTabNewService",
+                new runtime.domain.tools.service.browser.TabNewTool()
+        ).description("Open a new tab")
+                .inputSchema("""
+                        {"type": "object", "properties": {"url": {"type": "string"}}, "required": [], "description": "Browser new tab request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.TabNewTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserTabSelectTool() {
+        return FunctionToolCallback.builder(
+                "BrowserTabSelectService",
+                new runtime.domain.tools.service.browser.TabSelectTool()
+        ).description("Select a tab by index")
+                .inputSchema("""
+                        {"type": "object", "properties": {"index": {"type": "number"}}, "required": ["index"], "description": "Browser select tab request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.TabSelectTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserTabCloseTool() {
+        return FunctionToolCallback.builder(
+                "BrowserTabCloseService",
+                new runtime.domain.tools.service.browser.TabCloseTool()
+        ).description("Close a tab")
+                .inputSchema("""
+                        {"type": "object", "properties": {"index": {"type": "number"}}, "required": [], "description": "Browser close tab request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.TabCloseTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserWaitForTool() {
+        return FunctionToolCallback.builder(
+                "BrowserWaitForService",
+                new runtime.domain.tools.service.browser.WaitForTool()
+        ).description("Wait for conditions")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {"time": {"type": "number"}, "text": {"type": "string"}, "textGone": {"type": "string"}},
+                            "required": [],
+                            "description": "Browser wait for request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.WaitForTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserResizeTool() {
+        return FunctionToolCallback.builder(
+                "BrowserResizeService",
+                new runtime.domain.tools.service.browser.ResizeTool()
+        ).description("Resize browser window")
+                .inputSchema("""
+                        {"type": "object", "properties": {"width": {"type": "number"}, "height": {"type": "number"}}, "required": ["width", "height"], "description": "Browser resize request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.ResizeTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserCloseTool() {
+        return FunctionToolCallback.builder(
+                "BrowserCloseService",
+                new runtime.domain.tools.service.browser.CloseTool()
+        ).description("Close current page")
+                .inputSchema("""
+                        {"type": "object", "properties": {}, "required": [], "description": "Browser close request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.CloseTool.Request.class)
                 .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
                 .build();
     }

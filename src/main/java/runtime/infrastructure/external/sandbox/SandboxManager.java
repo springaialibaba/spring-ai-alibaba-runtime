@@ -21,9 +21,11 @@ public class SandboxManager {
         client = dockerManager.connectDocker();
     }
 
-    private Map<SandboxType, String> typeNameMap= Map.of(
-        SandboxType.BASE, "agentscope/runtime-sandbox-base"
-    );
+    private Map<SandboxType, String> typeNameMap= new HashMap<SandboxType, String>() {{
+        put(SandboxType.BASE, "agentscope/runtime-sandbox-base");
+        put(SandboxType.FILESYSTEM, "agentscope/runtime-sandbox-filesystem");
+        put(SandboxType.BROWSER, "agentscope/runtime-sandbox-browser");
+    }};
 
     public ContainerModel getSandbox(SandboxType sandboxType){
         if(sandboxMap.containsKey(sandboxType)){

@@ -5,6 +5,8 @@ package runtime.infrastructure.external.sandbox.model;
  */
 public enum SandboxType {
     BASE("base"),
+    BROWSER("browser"),
+    FILESYSTEM("filesystem"),
     PYTHON("python"),
     NODE("node"),
     JAVA("java");

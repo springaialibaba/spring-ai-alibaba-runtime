@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.chat.model.ToolContext;
 
 import java.util.function.BiFunction;
+import java.util.logging.Logger;
 
 /**
  * 调用沙箱运行python代码
@@ -30,41 +31,40 @@ import java.util.function.BiFunction;
  * @author xuehuitian45
  * @since 2025/9/4
  */
-public class RunPythonTools implements BiFunction<RunPythonTools.RunPythonToolRequest, ToolContext, RunPythonTools.RunPythonToolResponse> {
+public class RunPythonTool implements BiFunction<RunPythonTool.RunPythonToolRequest, ToolContext, RunPythonTool.RunPythonToolResponse> {
+
+    Logger logger = Logger.getLogger(RunPythonTool.class.getName());
 
     @Override
     public RunPythonToolResponse apply(RunPythonToolRequest request, ToolContext toolContext) {
-        System.out.println("运行函数工具被调用，收到请求: " + request.code);
         try {
             String result = performPythonExecute(
                     request.code
             );
 
             return new RunPythonToolResponse(
-                    new Response(result, "代码执行完成")
+                    new Response(result, "Code execution completed")
             );
         } catch (Exception e) {
             return new RunPythonToolResponse(
-                    new Response("Error", "代码执行失败: " + e.getMessage())
+                    new Response("Error", "Code execution error : " + e.getMessage())
             );
         }
     }
 
-    /**
-     * 执行数学计算
-     */
+
     private String performPythonExecute(String code) {
-        System.out.println("执行代码: " + code);
+        logger.info("Run Code: " + code);
         BaseSandboxTools tools = new BaseSandboxTools();
         String result = tools.run_ipython_cell(code);
-        System.out.println("执行结果: " + result);
+        logger.info("Execute Result: " + result);
         return result;
     }
 
     // 请求类型定义
     public record RunPythonToolRequest(
             @JsonProperty(required = true, value = "code")
-            @JsonPropertyDescription("代码内容")
+            @JsonPropertyDescription("Python code to be executed")
             String code
     ) {
         public RunPythonToolRequest(String code) {
@@ -81,7 +81,7 @@ public class RunPythonTools implements BiFunction<RunPythonTools.RunPythonToolRe
 
 
 
-    @JsonClassDescription("结果中包含计算结果和操作结果消息")
+    @JsonClassDescription("The result contains the code output and the execute result")
     public record Response(String result, String message) {
         public Response(String result, String message) {
             this.result = result;
@@ -89,13 +89,13 @@ public class RunPythonTools implements BiFunction<RunPythonTools.RunPythonToolRe
         }
 
         @JsonProperty(required = true, value = "result")
-        @JsonPropertyDescription("代码输出")
+        @JsonPropertyDescription("code output")
         public String result() {
             return this.result;
         }
 
         @JsonProperty(required = true, value = "message")
-        @JsonPropertyDescription("操作结果消息")
+        @JsonPropertyDescription("execute result")
         public String message() {
             return this.message;
         }

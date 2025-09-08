@@ -3,6 +3,7 @@ package runtime.infrastructure.external.sandbox.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -72,6 +73,30 @@ public class HttpClient {
     public String postJson(String url, Map<String, String> headers, Object requestData) throws IOException {
         String jsonBody = objectMapper.writeValueAsString(requestData);
         return post(url, headers, jsonBody);
+    }
+
+    /**
+     * 发送GET请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头
+     * @return 响应内容
+     * @throws IOException 请求异常
+     */
+    public String get(String url, Map<String, String> headers) throws IOException {
+        HttpGet httpGet = new HttpGet(url);
+        if (headers != null) {
+            headers.forEach(httpGet::setHeader);
+        }
+        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            String responseBody = response.getEntity() != null ? new String(response.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8) : "";
+            if (statusCode >= 200 && statusCode < 300) {
+                return responseBody;
+            } else {
+                throw new IOException("HTTP请求失败，状态码: " + statusCode + ", 响应: " + responseBody);
+            }
+        }
     }
     
     /**
