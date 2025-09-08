@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-com.alibaba.cloud.ai.a2a.server.nacos.config.NacosConfiguration
-com.alibaba.cloud.ai.a2a.server.registry.AgentRegistryConfiguration
+runtime.infrastructure.config.nacos.NacosConfiguration
+runtime.infrastructure.config.core.AgentRegistryConfiguration
