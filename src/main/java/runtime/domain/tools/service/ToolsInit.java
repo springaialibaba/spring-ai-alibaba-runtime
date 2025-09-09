@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import runtime.domain.tools.service.base.RunPythonTool;
 import runtime.domain.tools.service.base.RunShellCommandTool;
 
+import javax.tools.Tool;
 import java.util.List;
 
 /**
@@ -34,7 +35,7 @@ import java.util.List;
 @Component
 public class ToolsInit {
 
-    public List<ToolCallback> getTools() {
+    public List<ToolCallback> getAllTools() {
         return List.of(
                 RunPythonCodeTools(),
                 RunShellCommandTools(),
@@ -49,6 +50,134 @@ public class ToolsInit {
                 SearchFilesTool(),
                 GetFileInfoTool(),
                 ListAllowedDirectoriesTool(),
+                BrowserNavigateTool(),
+                BrowserClickTool(),
+                BrowserTypeTool(),
+                BrowserTakeScreenshotTool(),
+                BrowserSnapshotTool(),
+                BrowserTabNewTool(),
+                BrowserTabSelectTool(),
+                BrowserTabCloseTool(),
+                BrowserWaitForTool(),
+                BrowserResizeTool(),
+                BrowserCloseTool(),
+                BrowserConsoleMessagesTool(),
+                BrowserHandleDialogTool(),
+                BrowserFileUploadTool(),
+                BrowserPressKeyTool(),
+                BrowserNavigateBackTool(),
+                BrowserNavigateForwardTool(),
+                BrowserNetworkRequestsTool(),
+                BrowserPdfSaveTool(),
+                BrowserDragTool(),
+                BrowserHoverTool(),
+                BrowserSelectOptionTool(),
+                BrowserTabListTool()
+        );
+    }
+
+    /**
+     * 根据工具名称获取对应的ToolCallback
+     * @param toolName 工具名称
+     * @return ToolCallback实例，如果未找到返回null
+     */
+    public ToolCallback getToolByName(String toolName) {
+        if (toolName == null || toolName.trim().isEmpty()) {
+            return null;
+        }
+
+        // 工具名称映射表
+        return switch (toolName.toLowerCase().trim()) {
+            // 基础工具
+            case "runpython", "run_python", "python" -> RunPythonCodeTools();
+            case "runshell", "run_shell", "shell" -> RunShellCommandTools();
+            
+            // 文件系统工具
+            case "readfile", "read_file", "fs_read" -> ReadFileTool();
+            case "readmultiplefiles", "read_multiple_files", "fs_read_multiple" -> ReadMultipleFilesTool();
+            case "writefile", "write_file", "fs_write" -> WriteFileTool();
+            case "editfile", "edit_file", "fs_edit" -> EditFileTool();
+            case "createdirectory", "create_directory", "fs_create_dir" -> CreateDirectoryTool();
+            case "listdirectory", "list_directory", "fs_list" -> ListDirectoryTool();
+            case "directorytree", "directory_tree", "fs_tree" -> DirectoryTreeTool();
+            case "movefile", "move_file", "fs_move" -> MoveFileTool();
+            case "searchfiles", "search_files", "fs_search" -> SearchFilesTool();
+            case "getfileinfo", "get_file_info", "fs_info" -> GetFileInfoTool();
+            case "listalloweddirectories", "list_allowed_directories", "fs_allowed" -> ListAllowedDirectoriesTool();
+            
+            // 浏览器工具
+            case "browsernavigate", "browser_navigate", "browser_nav" -> BrowserNavigateTool();
+            case "browserclick", "browser_click" -> BrowserClickTool();
+            case "browsertype", "browser_type" -> BrowserTypeTool();
+            case "browsertakescreenshot", "browser_take_screenshot", "browser_screenshot" -> BrowserTakeScreenshotTool();
+            case "browsersnapshot", "browser_snapshot" -> BrowserSnapshotTool();
+            case "browsertabnew", "browser_tab_new" -> BrowserTabNewTool();
+            case "browsertabselect", "browser_tab_select" -> BrowserTabSelectTool();
+            case "browsertabclose", "browser_tab_close" -> BrowserTabCloseTool();
+            case "browserwaitfor", "browser_wait_for" -> BrowserWaitForTool();
+            case "browserresize", "browser_resize" -> BrowserResizeTool();
+            case "browserclose", "browser_close" -> BrowserCloseTool();
+            case "browserconsolemessages", "browser_console_messages" -> BrowserConsoleMessagesTool();
+            case "browserhandledialog", "browser_handle_dialog" -> BrowserHandleDialogTool();
+            case "browserfileupload", "browser_file_upload" -> BrowserFileUploadTool();
+            case "browserpresskey", "browser_press_key" -> BrowserPressKeyTool();
+            case "browsernavigateback", "browser_navigate_back" -> BrowserNavigateBackTool();
+            case "browsernavigateforward", "browser_navigate_forward" -> BrowserNavigateForwardTool();
+            case "browsernetworkrequests", "browser_network_requests" -> BrowserNetworkRequestsTool();
+            case "browserpdfsave", "browser_pdf_save" -> BrowserPdfSaveTool();
+            case "browserdrag", "browser_drag" -> BrowserDragTool();
+            case "browserhover", "browser_hover" -> BrowserHoverTool();
+            case "browserselectoption", "browser_select_option" -> BrowserSelectOptionTool();
+            case "browsertablist", "browser_tab_list" -> BrowserTabListTool();
+            
+            default -> {
+                System.err.println("未知的工具名称: " + toolName);
+                yield null;
+            }
+        };
+    }
+
+    /**
+     * 根据工具名称列表获取对应的ToolCallback列表
+     * @param toolNames 工具名称列表
+     * @return ToolCallback列表
+     */
+    public List<ToolCallback> getToolsByName(List<String> toolNames) {
+        if (toolNames == null || toolNames.isEmpty()) {
+            return List.of();
+        }
+
+        return toolNames.stream()
+                .map(this::getToolByName)
+                .filter(tool -> tool != null)
+                .toList();
+    }
+
+    public List<ToolCallback> getBaseTools() {
+        return List.of(
+                RunPythonCodeTools(),
+                RunShellCommandTools()
+        );
+    }
+
+    public List<ToolCallback> getFileSystemTools() {
+        return List.of(
+                ReadFileTool(),
+                ReadMultipleFilesTool(),
+                WriteFileTool(),
+                EditFileTool(),
+                CreateDirectoryTool(),
+                ListDirectoryTool(),
+                DirectoryTreeTool(),
+                MoveFileTool(),
+                SearchFilesTool(),
+                GetFileInfoTool(),
+                ListAllowedDirectoriesTool()
+        );
+    }
+
+    public List<ToolCallback> getBrowserTools() {
+        return List.of(
                 BrowserNavigateTool(),
                 BrowserClickTool(),
                 BrowserTypeTool(),

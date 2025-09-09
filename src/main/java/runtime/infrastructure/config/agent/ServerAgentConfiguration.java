@@ -202,7 +202,21 @@ public class ServerAgentConfiguration {
     }
 
     private List<ToolCallback> convertToolCallbacks(List<String> toolNames) {
-        return List.of();
+        if (toolNames == null || toolNames.isEmpty()) {
+            System.out.println("没有配置工具，使用默认工具集");
+            return toolsInit.getAllTools();
+        }
+
+        System.out.println("从配置加载工具: " + toolNames);
+        List<ToolCallback> tools = toolsInit.getToolsByName(toolNames);
+        
+        if (tools.isEmpty()) {
+            System.out.println("警告: 没有找到任何有效的工具，使用默认工具集");
+            return toolsInit.getAllTools();
+        }
+        
+        System.out.println("成功加载 " + tools.size() + " 个工具");
+        return tools;
     }
 
     private ToolCallbackResolver convertToolCallbackResolver(String resolverName) {
@@ -221,125 +235,128 @@ public class ServerAgentConfiguration {
 
         KeyStrategyFactory agentKeyStrategies = createAgentKeyStrategies(def, strategyFactory);
 
-        if ("ReactAgent".equals(type)) {
-            try {
-                ReactAgent.Builder builder = ReactAgent.builder().name(def.getName()).state(agentKeyStrategies).model(agentChatModel);
+        switch (type) {
+            case "ReactAgent" -> {
+                try {
+                    ReactAgent.Builder builder = ReactAgent.builder().name(def.getName()).state(agentKeyStrategies).model(agentChatModel);
 
-                if (def.getDescription() != null) {
-                    builder.description(def.getDescription());
+                    if (def.getDescription() != null) {
+                        builder.description(def.getDescription());
+                    }
+                    if (def.getInstruction() != null) {
+                        builder.instruction(def.getInstruction());
+                    }
+                    if (def.getOutputKey() != null) {
+                        builder.outputKey(def.getOutputKey());
+                    }
+                    if (def.getMaxIterations() != null) {
+                        builder.maxIterations(def.getMaxIterations());
+                    }
+                    if (def.getTools() != null) {
+                        builder.tools(convertToolCallbacks(def.getTools()));
+                    }
+                    if (def.getResolver() != null) {
+                        builder.resolver(convertToolCallbackResolver(def.getResolver()));
+                    }
+                    if (def.getInputKey() != null) {
+                        builder.inputKey(def.getInputKey());
+                    }
+                    if (def.getMaxIterations() != null) {
+                        builder.maxIterations(def.getMaxIterations());
+                    }
+                    return builder.build();
+                } catch (GraphStateException e) {
+                    throw new IllegalStateException("Failed to build ReactAgent: " + def.getName(), e);
                 }
-                if (def.getInstruction() != null) {
-                    builder.instruction(def.getInstruction());
-                }
-                if (def.getOutputKey() != null) {
-                    builder.outputKey(def.getOutputKey());
-                }
-                if (def.getMaxIterations() != null) {
-                    builder.maxIterations(def.getMaxIterations());
-                }
-                if (def.getTools() != null) {
-                    builder.tools(convertToolCallbacks(def.getTools()));
-                }
-                if (def.getResolver() != null) {
-                    builder.resolver(convertToolCallbackResolver(def.getResolver()));
-                }
-                if (def.getInputKey() != null) {
-                    builder.inputKey(def.getInputKey());
-                }
-                if (def.getMaxIterations() != null) {
-                    builder.maxIterations(def.getMaxIterations());
-                }
-                builder.tools(toolsInit.getTools());
-                return builder.build();
-            } catch (GraphStateException e) {
-                throw new IllegalStateException("Failed to build ReactAgent: " + def.getName(), e);
             }
-        } else if ("LlmRoutingAgent".equals(type)) {
-            try {
-                LlmRoutingAgent.LlmRoutingAgentBuilder builder = LlmRoutingAgent.builder().name(def.getName()).state(agentKeyStrategies).model(agentChatModel);
+            case "LlmRoutingAgent" -> {
+                try {
+                    LlmRoutingAgent.LlmRoutingAgentBuilder builder = LlmRoutingAgent.builder().name(def.getName()).state(agentKeyStrategies).model(agentChatModel);
 
-                if (def.getDescription() != null) {
-                    builder.description(def.getDescription());
+                    if (def.getDescription() != null) {
+                        builder.description(def.getDescription());
+                    }
+                    if (def.getOutputKey() != null) {
+                        builder.outputKey(def.getOutputKey());
+                    }
+                    if (def.getInputKey() != null) {
+                        builder.inputKey(def.getInputKey());
+                    }
+                    if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
+                        List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
+                            BaseAgent agent = existingAgents.get(name);
+                            if (agent == null) {
+                                throw new IllegalArgumentException("Unknown sub-agent: " + name);
+                            }
+                            return agent;
+                        }).collect(Collectors.toList());
+                        builder.subAgents(subAgents);
+                    }
+                    return builder.build();
+                } catch (GraphStateException e) {
+                    throw new IllegalStateException("Failed to build LlmRoutingAgent: " + def.getName(), e);
                 }
-                if (def.getOutputKey() != null) {
-                    builder.outputKey(def.getOutputKey());
-                }
-                if (def.getInputKey() != null) {
-                    builder.inputKey(def.getInputKey());
-                }
-                if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
-                    List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
-                        BaseAgent agent = existingAgents.get(name);
-                        if (agent == null) {
-                            throw new IllegalArgumentException("Unknown sub-agent: " + name);
-                        }
-                        return agent;
-                    }).collect(Collectors.toList());
-                    builder.subAgents(subAgents);
-                }
-                return builder.build();
-            } catch (GraphStateException e) {
-                throw new IllegalStateException("Failed to build LlmRoutingAgent: " + def.getName(), e);
             }
-        } else if ("SequentialAgent".equals(type)) {
-            try {
-                SequentialAgent.SequentialAgentBuilder builder = SequentialAgent.builder().name(def.getName()).state(agentKeyStrategies);
+            case "SequentialAgent" -> {
+                try {
+                    SequentialAgent.SequentialAgentBuilder builder = SequentialAgent.builder().name(def.getName()).state(agentKeyStrategies);
 
-                if (def.getDescription() != null) {
-                    builder.description(def.getDescription());
+                    if (def.getDescription() != null) {
+                        builder.description(def.getDescription());
+                    }
+                    if (def.getOutputKey() != null) {
+                        builder.outputKey(def.getOutputKey());
+                    }
+                    if (def.getInputKey() != null) {
+                        builder.inputKey(def.getInputKey());
+                    }
+                    if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
+                        List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
+                            BaseAgent agent = existingAgents.get(name);
+                            if (agent == null) {
+                                throw new IllegalArgumentException("Unknown sub-agent: " + name);
+                            }
+                            return agent;
+                        }).collect(Collectors.toList());
+                        builder.subAgents(subAgents);
+                    }
+                    return builder.build();
+                } catch (GraphStateException e) {
+                    throw new IllegalStateException("Failed to build SequentialAgent: " + def.getName(), e);
                 }
-                if (def.getOutputKey() != null) {
-                    builder.outputKey(def.getOutputKey());
-                }
-                if (def.getInputKey() != null) {
-                    builder.inputKey(def.getInputKey());
-                }
-                if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
-                    List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
-                        BaseAgent agent = existingAgents.get(name);
-                        if (agent == null) {
-                            throw new IllegalArgumentException("Unknown sub-agent: " + name);
-                        }
-                        return agent;
-                    }).collect(Collectors.toList());
-                    builder.subAgents(subAgents);
-                }
-                return builder.build();
-            } catch (GraphStateException e) {
-                throw new IllegalStateException("Failed to build SequentialAgent: " + def.getName(), e);
             }
-        }
+
 
 //        Todo: 这个ParallelAgent的逻辑还没有看懂
-        else if ("ParallelAgent".equals(type)) {
-            try {
-                ParallelAgent.ParallelAgentBuilder builder = ParallelAgent.builder().name(def.getName()).state(agentKeyStrategies);
+            case "ParallelAgent" -> {
+                try {
+                    ParallelAgent.ParallelAgentBuilder builder = ParallelAgent.builder().name(def.getName()).state(agentKeyStrategies);
 
-                if (def.getDescription() != null) {
-                    builder.description(def.getDescription());
+                    if (def.getDescription() != null) {
+                        builder.description(def.getDescription());
+                    }
+                    if (def.getOutputKey() != null) {
+                        builder.outputKey(def.getOutputKey());
+                    }
+                    if (def.getInputKey() != null) {
+                        builder.inputKey(def.getInputKey());
+                    }
+                    if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
+                        List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
+                            BaseAgent agent = existingAgents.get(name);
+                            if (agent == null) {
+                                throw new IllegalArgumentException("Unknown sub-agent: " + name);
+                            }
+                            return agent;
+                        }).collect(Collectors.toList());
+                        builder.subAgents(subAgents);
+                    }
+                    return builder.build();
+                } catch (GraphStateException e) {
+                    throw new IllegalStateException("Failed to build ParallelAgent: " + def.getName(), e);
                 }
-                if (def.getOutputKey() != null) {
-                    builder.outputKey(def.getOutputKey());
-                }
-                if (def.getInputKey() != null) {
-                    builder.inputKey(def.getInputKey());
-                }
-                if (def.getSubAgentNames() != null && !def.getSubAgentNames().isEmpty()) {
-                    List<BaseAgent> subAgents = def.getSubAgentNames().stream().map(name -> {
-                        BaseAgent agent = existingAgents.get(name);
-                        if (agent == null) {
-                            throw new IllegalArgumentException("Unknown sub-agent: " + name);
-                        }
-                        return agent;
-                    }).collect(Collectors.toList());
-                    builder.subAgents(subAgents);
-                }
-                return builder.build();
-            } catch (GraphStateException e) {
-                throw new IllegalStateException("Failed to build ParallelAgent: " + def.getName(), e);
             }
-        } else {
-            throw new IllegalStateException("Unsupported agent type: " + type);
+            default -> throw new IllegalStateException("Unsupported agent type: " + type);
         }
     }
 
