@@ -29,6 +29,8 @@ sed -i.bak "s/^\(nacos.core.auth.server.identity.key=\)$/\1testKey/" "distributi
 sed -i.bak "s/^\(nacos.core.auth.server.identity.value=\)$/\1testValue/" "distribution/target/nacos-server-$nacos_version/nacos/conf/application.properties"
 ```
 
+##### 3. 安装docker环境
+
 #### 启动Runtime
 
 ##### 1. 配置环境变量
@@ -133,7 +135,22 @@ nacos:
   password: ${NACOS_PASSWORD}
 ```
 
-##### 6. 配置Agent
+##### 6. 下载沙箱
+
+执行如下命令，从阿里云镜像源拉取对应镜像：
+
+```shell
+# 基础镜像
+docker pull agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/runtime-sandbox-base:latest && docker tag agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/runtime-sandbox-base:latest agentscope/runtime-sandbox-base:latest
+
+# 文件系统镜像
+docker pull agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/runtime-sandbox-filesystem:latest && docker tag agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/runtime-sandbox-filesystem:latest agentscope/runtime-sandbox-filesystem:latest
+
+# 浏览器镜像
+docker pull agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/runtime-sandbox-browser:latest && docker tag agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/runtime-sandbox-browser:latest agentscope/runtime-sandbox-browser:latest
+```
+
+##### 7. 配置Agent
 
 在`application-agent.yml`中配置Agents，Agents配置如下：
 
@@ -148,7 +165,7 @@ agents: # ReactAgent/SequentialAgent/LlmRoutingAgent/
     instruction: "你是一个专业的作家，擅长写各种散文。请根据用户的要求创作高质量的散文。" # 给Agent中model的prompt
     max_iterations: 6	# 在Agent执行过程中思考和调用工具的最大次数
 
-    tools: 
+    tools: 	# 当前只支持使用沙箱中提供的工具，后续将逐步扩展范围
       - "write_file"      # 保存散文到文件
       - "read_file"       # 读取参考文件
     resolver: toolCallbackResolver    # 存在时优先于 tool，当前还未实现，可以直接使用默认
@@ -211,4 +228,51 @@ agents: # ReactAgent/SequentialAgent/LlmRoutingAgent/
       - "poem_writer_agent"
       - "CodeExecuteAgent"
 ```
+
+##### 8. 支持的工具列表（以下工具均支持多名称匹配）
+
+**基础工具：**
+
+* 运行python代码：`runpython`,`run_python`,`python`
+* 运行shell脚本：`runshell`,`run_shell`,`shell`
+
+**文件系统工具：**
+
+* 读文件：`readfile`,`read_file`,`fs_read`
+* 读多个文件：`readmultiplefiles`,`read_multiple_files`,`fs_read_multiple`
+* 写文件：`writefile`,`write_file`,`fs_write`
+* 编辑文件：`editfile`,`edit_file`,`fs_edit`
+* 创建目录：`createdirectory`,`create_directory`,`fs_create_dir`
+* 罗列目录：`listdirectory`,`list_directory`,`fs_list`
+* 目录树：`directorytree`,`directory_tree`,`fs_tree`
+* 移动文件：`movefile`,`move_file`,`fs_move`
+* 搜索文件：`searchfiles`,`search_files`,`fs_search`
+* 获取文件信息：`getfileinfo`,`get_file_info`,`fs_info`
+* 列举可以访问的目录：`listalloweddirectories`,`list_allowed_directories`,`fs_allowed`
+
+**浏览器工具：**
+
+* 浏览器导航：`browsernavigate`,`browser_navigate`,`browser_nav`
+* 浏览器点击元素：`browserclick`,`browser_click`
+* 向元素中输入内容：`browsertype`,`browser_type`
+* 进行截屏：`browsertakescreenshot`,`browser_take_screenshot`,`browser_screenshot`
+* 捕捉浏览器快照：`browsersnapshot`,`browser_snapshot`
+* 创建新的标签页：`browsertabnew`,`browser_tab_new`
+* 选择标签页：`browsertabselect`,`browser_tab_select`
+* 关闭标签页：`browsertabclose`,`browser_tab_close`
+* 让浏览器等待：`browserwaitfor`,`browser_wait_for`
+* 更改浏览器的页面大小：`browserresize`,`browser_resize`
+* 关闭浏览器：`browserclose`,`browser_close`
+* 获取控制台消息：`browserconsolemessages`,`browser_console_messages`
+* 处理对话框：`browserhandledialog`,`browser_handle_dialog`
+* 上传文件：`browserfileupload`,`browser_file_upload`
+* 模拟按键：`browserpresskey`,`browser_press_key`
+* 后退：`browsernavigateback`,`browser_navigate_back`
+* 前进：`browsernavigateforward`,`browser_navigate_forward`
+* 获取网络请求：`browsernetworkrequests`,`browser_network_requests`
+* 保存为PDF：`browserpdfsave`,`browser_pdf_save`
+* 拖拽元素：`browserdrag`,`browser_drag`
+* 悬停元素：`browserhover`,`browser_hover`
+* 选择下拉选项：`browserselectoption`,`browser_select_option`
+* 列出标签页：`browsertablist`,`browser_tab_list`
 
