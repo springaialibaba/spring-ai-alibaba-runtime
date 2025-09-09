@@ -122,6 +122,6 @@ src/main/resources/
 ├── application.yml                  # 主配置文件
 ├── application-memory.yml           # 内存相关配置
 ├── application-nacos.yml            # Nacos配置
-├── application-new-agent.yml        # 新Agent配置
+├── application-agent.yml        # Agent配置
 └── application-runtime.yml          # 运行时配置
 ```

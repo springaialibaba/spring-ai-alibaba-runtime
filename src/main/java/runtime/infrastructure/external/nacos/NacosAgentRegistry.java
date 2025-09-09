@@ -6,7 +6,7 @@ import runtime.infrastructure.external.nacos.util.AgentCardUtil;
 import runtime.infrastructure.external.registry.AgentRegistry;
 import com.alibaba.nacos.api.ai.model.a2a.AgentCard;
 import com.alibaba.nacos.api.exception.NacosException;
-import com.alibaba.nacos.maintainer.client.ai.A2aMaintainerService;
+import com.alibaba.nacos.maintainer.client.ai.AiMaintainerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +19,12 @@ public class NacosAgentRegistry implements AgentRegistry {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(NacosAgentRegistry.class);
     
-    private final A2aMaintainerService a2aMaintainerService;
+    private final AiMaintainerService aiMaintainerService;
     
     private final NacosProperties nacosProperties;
     
-    public NacosAgentRegistry(A2aMaintainerService a2aMaintainerService, NacosProperties nacosProperties) {
-        this.a2aMaintainerService = a2aMaintainerService;
+    public NacosAgentRegistry(AiMaintainerService aiMaintainerService, NacosProperties nacosProperties) {
+        this.aiMaintainerService = aiMaintainerService;
         this.nacosProperties = nacosProperties;
     }
     
@@ -37,7 +37,7 @@ public class NacosAgentRegistry implements AgentRegistry {
         LOGGER.info("自动注册Agent{}到Nacos中", agentCardInfo.getName());
         try {
             AgentCard agentCard = buildAgentCardFromRootAgent(agentCardInfo);
-            a2aMaintainerService.registerAgent(agentCard, nacosProperties.getNamespace());
+            aiMaintainerService.registerAgent(agentCard, nacosProperties.getNamespace());
             LOGGER.info("自动注册Agent{}到Nacos成功", agentCard.getName());
         } catch (NacosException e) {
             LOGGER.warn("Auto Register Agent {} failed", agentCardInfo.getName(), e);

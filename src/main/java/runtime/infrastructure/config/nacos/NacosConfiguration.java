@@ -6,8 +6,8 @@ import runtime.infrastructure.config.agent.ServerAgentConfiguration;
 import runtime.infrastructure.external.nacos.NacosAgentRegistry;
 import runtime.infrastructure.external.registry.AgentRegistry;
 import com.alibaba.nacos.api.exception.NacosException;
-import com.alibaba.nacos.maintainer.client.ai.A2aMaintainerFactory;
-import com.alibaba.nacos.maintainer.client.ai.A2aMaintainerService;
+import com.alibaba.nacos.maintainer.client.ai.AiMaintainerFactory;
+import com.alibaba.nacos.maintainer.client.ai.AiMaintainerService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -29,15 +29,15 @@ public class NacosConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    public A2aMaintainerService a2aMaintainerService(NacosProperties config) throws NacosException {
-        return A2aMaintainerFactory.createA2aMaintainerService(config.toNacosProperties());
+    public AiMaintainerService a2aMaintainerService(NacosProperties config) throws NacosException {
+        return AiMaintainerFactory.createAiMaintainerService(config.toNacosProperties());
     }
     
     @Bean
-    @ConditionalOnBean(value = {A2aMaintainerService.class, AgentProperties.class})
+    @ConditionalOnBean(value = {AiMaintainerService.class, AgentProperties.class})
     @ConditionalOnMissingBean
-    public AgentRegistry nacosAgentRegistry(A2aMaintainerService a2aMaintainerService,
+    public AgentRegistry nacosAgentRegistry(AiMaintainerService aiMaintainerService,
             NacosProperties nacosProperties) {
-        return new NacosAgentRegistry(a2aMaintainerService, nacosProperties);
+        return new NacosAgentRegistry(aiMaintainerService, nacosProperties);
     }
 }

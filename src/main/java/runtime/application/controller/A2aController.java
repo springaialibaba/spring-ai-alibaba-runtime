@@ -56,7 +56,6 @@ public class A2aController {
     @PostMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE, produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_EVENT_STREAM_VALUE})
     @ResponseBody
     public Object handleRequest(@RequestBody String body, HttpServletRequest httpRequest) {
-        System.out.println(body);
         ServerCallContext context = buildServerCallContext(httpRequest);
         boolean streaming = isStreamingRequest(body);
         Object result = null;

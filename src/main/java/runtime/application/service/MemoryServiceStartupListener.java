@@ -65,7 +65,6 @@ public class MemoryServiceStartupListener {
                 
             } catch (Exception e) {
                 logger.error("记忆服务启动失败", e);
-                // 不抛出异常，避免影响应用启动
                 logger.warn("记忆服务启动失败，但应用将继续运行。请检查配置或手动启动服务。");
             }
         });
