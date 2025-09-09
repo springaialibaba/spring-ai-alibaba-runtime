@@ -148,10 +148,34 @@ public class SandboxManager {
     public void stopAndRemoveSandbox(SandboxType sandboxType){
         ContainerModel containerModel = sandboxMap.get(sandboxType);
         if (containerModel != null) {
-            DockerManager dockerManager = new DockerManager();
-            dockerManager.stopContainer(this.client, containerModel.getContainerId());
-            dockerManager.removeContainer(this.client, containerModel.getContainerId());
-            sandboxMap.remove(sandboxType);
+            try {
+                DockerManager dockerManager = new DockerManager();
+                String containerId = containerModel.getContainerId();
+                String containerName = containerModel.getContainerName();
+                
+                System.out.println("正在停止并删除 " + sandboxType + " 沙箱 (容器ID: " + containerId + ", 名称: " + containerName + ")");
+                
+                // 先尝试停止容器
+                dockerManager.stopContainer(this.client, containerId);
+                
+                // 等待一小段时间确保容器完全停止
+                Thread.sleep(1000);
+                
+                // 强制删除容器
+                dockerManager.removeContainer(this.client, containerId);
+                
+                // 从映射中移除
+                sandboxMap.remove(sandboxType);
+                
+                System.out.println(sandboxType + " 沙箱已成功删除");
+            } catch (Exception e) {
+                System.err.println("删除 " + sandboxType + " 沙箱时出错: " + e.getMessage());
+                e.printStackTrace();
+                // 即使删除失败，也要从映射中移除，避免内存泄漏
+                sandboxMap.remove(sandboxType);
+            }
+        } else {
+            System.out.println("未找到 " + sandboxType + " 沙箱，可能已经被删除");
         }
     }
 

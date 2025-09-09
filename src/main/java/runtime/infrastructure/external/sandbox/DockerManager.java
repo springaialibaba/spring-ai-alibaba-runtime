@@ -384,10 +384,15 @@ public class DockerManager {
      */
     public void removeContainer(DockerClient client, String containerId) {
         try {
-            client.removeContainerCmd(containerId).exec();
+            // 强制删除容器，即使容器正在运行
+            client.removeContainerCmd(containerId)
+                    .withForce(true)  // 强制删除
+                    .withRemoveVolumes(true)  // 同时删除关联的卷
+                    .exec();
             System.out.println("容器删除成功: " + containerId);
         } catch (Exception e) {
             System.err.println("删除容器失败: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

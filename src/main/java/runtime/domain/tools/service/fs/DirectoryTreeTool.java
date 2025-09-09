@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.chat.model.ToolContext;
-import runtime.domain.tools.service.BaseSandboxTools;
+import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
@@ -16,7 +16,7 @@ public class DirectoryTreeTool implements BiFunction<DirectoryTreeTool.Request, 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
         try {
-            BaseSandboxTools tools = new BaseSandboxTools();
+            SandboxTools tools = new SandboxTools();
             String result = tools.fs_directory_tree(request.path);
             return new Response(result, "Filesystem directory_tree completed");
         } catch (Exception e) {

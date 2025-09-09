@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package runtime.domain.tools.service;
+package runtime.domain.tools.service.base;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.chat.model.ToolContext;
+import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
@@ -55,7 +56,7 @@ public class RunPythonTool implements BiFunction<RunPythonTool.RunPythonToolRequ
 
     private String performPythonExecute(String code) {
         logger.info("Run Code: " + code);
-        BaseSandboxTools tools = new BaseSandboxTools();
+        SandboxTools tools = new SandboxTools();
         String result = tools.run_ipython_cell(code);
         logger.info("Execute Result: " + result);
         return result;

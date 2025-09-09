@@ -1,9 +1,10 @@
-package runtime.domain.tools.service;
+package runtime.domain.tools.service.base;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.chat.model.ToolContext;
+import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
@@ -37,7 +38,7 @@ public class RunShellCommandTool implements BiFunction<RunShellCommandTool.RunSh
 
     private String performShellExecute(String command) {
         logger.info("Run Shell Command: " + command);
-        BaseSandboxTools tools = new BaseSandboxTools();
+        SandboxTools tools = new SandboxTools();
         String result = tools.run_shell_command(command);
         logger.info("Execute Result: " + result);
         return result;

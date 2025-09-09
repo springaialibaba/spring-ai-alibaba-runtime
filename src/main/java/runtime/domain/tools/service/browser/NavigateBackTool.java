@@ -6,12 +6,15 @@ import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
-public class CloseTool implements BiFunction<CloseTool.Request, ToolContext, CloseTool.Response> {
+/**
+ * 浏览器后退导航工具
+ */
+public class NavigateBackTool implements BiFunction<NavigateBackTool.Request, ToolContext, NavigateBackTool.Response> {
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new SandboxTools().browser_close();
-        return new Response(result, "Browser close completed");
+        String result = new SandboxTools().browser_navigate_back();
+        return new Response(result, "Browser navigate back completed");
     }
 
     public record Request() { }
@@ -19,5 +22,3 @@ public class CloseTool implements BiFunction<CloseTool.Request, ToolContext, Clo
     @JsonClassDescription("The result contains browser tool output and message")
     public record Response(String result, String message) {}
 }
-
-

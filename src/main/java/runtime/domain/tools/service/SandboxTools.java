@@ -15,13 +15,16 @@ import java.util.logging.Logger;
 /**
  * 沙箱工具类，提供各种沙箱操作功能
  */
-public class BaseSandboxTools {
-    private final Logger logger = Logger.getLogger(BaseSandboxTools.class.getName());
+public class SandboxTools {
+    private final Logger logger = Logger.getLogger(SandboxTools.class.getName());
     private final SandboxManager sandboxManager;
     private final HttpClient httpClient;
+    
+    // 使用单例模式确保所有实例共享同一个SandboxManager
+    private static final SandboxManager SHARED_SANDBOX_MANAGER = new SandboxManager();
 
-    public BaseSandboxTools() {
-        this.sandboxManager = new SandboxManager();
+    public SandboxTools() {
+        this.sandboxManager = SHARED_SANDBOX_MANAGER;
         this.httpClient = new HttpClient();
     }
 
@@ -102,10 +105,7 @@ public class BaseSandboxTools {
             // 构建请求体
             ShellCommandRequest request = new ShellCommandRequest(command);
 
-            // 发送请求
-            String response = httpClient.postJson(requestUrl, headers, request);
-
-            return response;
+            return httpClient.postJson(requestUrl, headers, request);
 
         } catch (Exception e) {
             String errorMsg = "Run Shell Command Error: " + e.getMessage();
@@ -219,6 +219,9 @@ public class BaseSandboxTools {
         if (excludePatterns != null) {
             args.put("excludePatterns", excludePatterns);
         }
+        else{
+            args.put("excludePatterns", new String[]{});
+        }
         return call_mcp_tool("search_files", args);
     }
 
@@ -237,6 +240,10 @@ public class BaseSandboxTools {
         Map<String, Object> args = new HashMap<>();
         args.put("url", url);
         return call_mcp_tool(SandboxType.BROWSER, "browser_navigate", args);
+    }
+
+    public String browser_console_messages_tool(){
+        return call_mcp_tool(SandboxType.BROWSER, "browser_console_messages", new HashMap<>());
     }
 
     public String browser_click(String element, String ref) {
@@ -306,10 +313,79 @@ public class BaseSandboxTools {
         return call_mcp_tool(SandboxType.BROWSER, "browser_close", new HashMap<>());
     }
 
+    public String browser_handle_dialog(Boolean accept, String promptText) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("accept", accept);
+        if (promptText != null) {
+            args.put("promptText", promptText);
+        }
+        return call_mcp_tool(SandboxType.BROWSER, "browser_handle_dialog", args);
+    }
+
+    public String browser_file_upload(String[] paths) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("paths", paths);
+        return call_mcp_tool(SandboxType.BROWSER, "browser_file_upload", args);
+    }
+
+    public String browser_press_key(String key) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("key", key);
+        return call_mcp_tool(SandboxType.BROWSER, "browser_press_key", args);
+    }
+
+    public String browser_navigate_back() {
+        return call_mcp_tool(SandboxType.BROWSER, "browser_navigate_back", new HashMap<>());
+    }
+
+    public String browser_navigate_forward() {
+        return call_mcp_tool(SandboxType.BROWSER, "browser_navigate_forward", new HashMap<>());
+    }
+
+    public String browser_network_requests() {
+        return call_mcp_tool(SandboxType.BROWSER, "browser_network_requests", new HashMap<>());
+    }
+
+    public String browser_pdf_save(String filename) {
+        Map<String, Object> args = new HashMap<>();
+        if (filename != null) {
+            args.put("filename", filename);
+        }
+        return call_mcp_tool(SandboxType.BROWSER, "browser_pdf_save", args);
+    }
+
+    public String browser_drag(String startElement, String startRef, String endElement, String endRef) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("startElement", startElement);
+        args.put("startRef", startRef);
+        args.put("endElement", endElement);
+        args.put("endRef", endRef);
+        return call_mcp_tool(SandboxType.BROWSER, "browser_drag", args);
+    }
+
+    public String browser_hover(String element, String ref) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("element", element);
+        args.put("ref", ref);
+        return call_mcp_tool(SandboxType.BROWSER, "browser_hover", args);
+    }
+
+    public String browser_select_option(String element, String ref, String[] values) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("element", element);
+        args.put("ref", ref);
+        args.put("values", values);
+        return call_mcp_tool(SandboxType.BROWSER, "browser_select_option", args);
+    }
+
+    public String browser_tab_list() {
+        return call_mcp_tool(SandboxType.BROWSER, "browser_tab_list", new HashMap<>());
+    }
+
     /**
      * 检查沙箱是否正在运行
      *
-     * @param sandbox 沙箱模型
+     * @param sandboxType 沙箱模型
      * @return 是否正在运行
      */
     private boolean isSandboxRunning(SandboxType sandboxType) {
@@ -337,7 +413,7 @@ public class BaseSandboxTools {
         headers.put("Host", "localhost:" + sandbox.getPorts()[0]);
 
         long start = System.currentTimeMillis();
-        long timeoutMs = 60_000; // 60s
+        long timeoutMs = 60_000;
         long sleepMs = 700;
         try {
             Thread.sleep(1500); // 容器进程冷启动等待

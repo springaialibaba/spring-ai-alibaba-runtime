@@ -8,28 +8,26 @@ import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
-public class TabCloseTool implements BiFunction<TabCloseTool.Request, ToolContext, TabCloseTool.Response> {
+/**
+ * 浏览器悬停工具
+ */
+public class HoverTool implements BiFunction<HoverTool.Request, ToolContext, HoverTool.Response> {
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new SandboxTools().browser_tab_close(request.index);
-        return new Response(result, "Browser tab_close completed");
+        String result = new SandboxTools().browser_hover(request.element, request.ref);
+        return new Response(result, "Browser hover completed");
     }
 
     public record Request(
-            @JsonProperty("index")
-            @JsonPropertyDescription("The index of the tab to close")
-            Integer index
-    ) { 
-        public Request {
-            if (index == null) {
-                index = -1;
-            }
-        }
-    }
+            @JsonProperty(required = true, value = "element")
+            @JsonPropertyDescription("Human-readable element description")
+            String element,
+            @JsonProperty(required = true, value = "ref")
+            @JsonPropertyDescription("Exact target element reference from the page snapshot")
+            String ref
+    ) { }
 
     @JsonClassDescription("The result contains browser tool output and message")
     public record Response(String result, String message) {}
 }
-
-

@@ -8,23 +8,29 @@ import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
-public class TabNewTool implements BiFunction<TabNewTool.Request, ToolContext, TabNewTool.Response> {
+/**
+ * 浏览器对话框处理工具
+ */
+public class HandleDialogTool implements BiFunction<HandleDialogTool.Request, ToolContext, HandleDialogTool.Response> {
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new SandboxTools().browser_tab_new(request.url);
-        return new Response(result, "Browser tab_new completed");
+        String result = new SandboxTools().browser_handle_dialog(request.accept, request.promptText);
+        return new Response(result, "Browser handle dialog completed");
     }
 
     public record Request(
-            @JsonProperty("url")
-            @JsonPropertyDescription("The URL to navigate to in the new tab")
-            String url
+            @JsonProperty(required = true, value = "accept")
+            @JsonPropertyDescription("Whether to accept the dialog")
+            Boolean accept,
+            @JsonProperty(value = "promptText")
+            @JsonPropertyDescription("The text of the prompt in case of a prompt dialog")
+            String promptText
     ) { 
         public Request {
             // 为可选参数提供默认值处理
-            if (url == null) {
-                url = "";
+            if (promptText == null) {
+                promptText = "";
             }
         }
     }
@@ -32,5 +38,3 @@ public class TabNewTool implements BiFunction<TabNewTool.Request, ToolContext, T
     @JsonClassDescription("The result contains browser tool output and message")
     public record Response(String result, String message) {}
 }
-
-

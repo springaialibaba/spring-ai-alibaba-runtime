@@ -8,28 +8,23 @@ import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
-public class TabCloseTool implements BiFunction<TabCloseTool.Request, ToolContext, TabCloseTool.Response> {
+/**
+ * 浏览器按键工具
+ */
+public class PressKeyTool implements BiFunction<PressKeyTool.Request, ToolContext, PressKeyTool.Response> {
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new SandboxTools().browser_tab_close(request.index);
-        return new Response(result, "Browser tab_close completed");
+        String result = new SandboxTools().browser_press_key(request.key);
+        return new Response(result, "Browser press key completed");
     }
 
     public record Request(
-            @JsonProperty("index")
-            @JsonPropertyDescription("The index of the tab to close")
-            Integer index
-    ) { 
-        public Request {
-            if (index == null) {
-                index = -1;
-            }
-        }
-    }
+            @JsonProperty(required = true, value = "key")
+            @JsonPropertyDescription("Name of the key to press or a character to generate")
+            String key
+    ) { }
 
     @JsonClassDescription("The result contains browser tool output and message")
     public record Response(String result, String message) {}
 }
-
-

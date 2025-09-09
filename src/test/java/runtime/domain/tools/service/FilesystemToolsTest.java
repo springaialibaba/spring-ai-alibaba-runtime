@@ -3,13 +3,15 @@ package runtime.domain.tools.service;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import runtime.infrastructure.external.sandbox.model.SandboxType;
 
-public class FilesystemToolsTest {
+public class FilesystemToolsTest extends BaseSandboxTest {
 
     @Test
     void testReadWriteAndEditFile() {
         Assumptions.assumeTrue(TestUtil.shouldRunIntegration());
-        BaseSandboxTools tools = new BaseSandboxTools();
+        recordSandboxUsage(SandboxType.FILESYSTEM);
+        SandboxTools tools = new SandboxTools();
 
         String write = tools.fs_write_file("/workspace/test.txt", "hello");
         System.out.println("write: "+write);
@@ -28,7 +30,8 @@ public class FilesystemToolsTest {
     @Test
     void testDirectoryOps() {
         Assumptions.assumeTrue(TestUtil.shouldRunIntegration());
-        BaseSandboxTools tools = new BaseSandboxTools();
+        recordSandboxUsage(SandboxType.FILESYSTEM);
+        SandboxTools tools = new SandboxTools();
 
         String created = tools.fs_create_directory("/workspace/dirA");
         System.out.println("created: "+created);
@@ -46,7 +49,8 @@ public class FilesystemToolsTest {
     @Test
     void testMoveSearchInfoAllowed() {
         Assumptions.assumeTrue(TestUtil.shouldRunIntegration());
-        BaseSandboxTools tools = new BaseSandboxTools();
+        recordSandboxUsage(SandboxType.FILESYSTEM);
+        SandboxTools tools = new SandboxTools();
 
         String write = tools.fs_write_file("/workspace/test.txt", "hello");
         System.out.println("write: "+write);

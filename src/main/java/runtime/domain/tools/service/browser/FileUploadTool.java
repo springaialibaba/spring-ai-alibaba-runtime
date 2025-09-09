@@ -8,28 +8,23 @@ import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
-public class TabCloseTool implements BiFunction<TabCloseTool.Request, ToolContext, TabCloseTool.Response> {
+/**
+ * 浏览器文件上传工具
+ */
+public class FileUploadTool implements BiFunction<FileUploadTool.Request, ToolContext, FileUploadTool.Response> {
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new SandboxTools().browser_tab_close(request.index);
-        return new Response(result, "Browser tab_close completed");
+        String result = new SandboxTools().browser_file_upload(request.paths);
+        return new Response(result, "Browser file upload completed");
     }
 
     public record Request(
-            @JsonProperty("index")
-            @JsonPropertyDescription("The index of the tab to close")
-            Integer index
-    ) { 
-        public Request {
-            if (index == null) {
-                index = -1;
-            }
-        }
-    }
+            @JsonProperty(required = true, value = "paths")
+            @JsonPropertyDescription("The absolute paths to the files to upload")
+            String[] paths
+    ) { }
 
     @JsonClassDescription("The result contains browser tool output and message")
     public record Response(String result, String message) {}
 }
-
-

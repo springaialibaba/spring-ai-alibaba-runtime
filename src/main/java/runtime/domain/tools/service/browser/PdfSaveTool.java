@@ -8,22 +8,26 @@ import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
-public class TabCloseTool implements BiFunction<TabCloseTool.Request, ToolContext, TabCloseTool.Response> {
+/**
+ * 浏览器PDF保存工具
+ */
+public class PdfSaveTool implements BiFunction<PdfSaveTool.Request, ToolContext, PdfSaveTool.Response> {
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new SandboxTools().browser_tab_close(request.index);
-        return new Response(result, "Browser tab_close completed");
+        String result = new SandboxTools().browser_pdf_save(request.filename);
+        return new Response(result, "Browser PDF save completed");
     }
 
     public record Request(
-            @JsonProperty("index")
-            @JsonPropertyDescription("The index of the tab to close")
-            Integer index
+            @JsonProperty(value = "filename")
+            @JsonPropertyDescription("File name to save the pdf to")
+            String filename
     ) { 
         public Request {
-            if (index == null) {
-                index = -1;
+            // 为可选参数提供默认值处理
+            if (filename == null) {
+                filename = "";
             }
         }
     }
@@ -31,5 +35,3 @@ public class TabCloseTool implements BiFunction<TabCloseTool.Request, ToolContex
     @JsonClassDescription("The result contains browser tool output and message")
     public record Response(String result, String message) {}
 }
-
-

@@ -3,7 +3,7 @@ package runtime.domain.tools.service.browser;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.ai.chat.model.ToolContext;
-import runtime.domain.tools.service.BaseSandboxTools;
+import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
@@ -11,7 +11,7 @@ public class TypeTool implements BiFunction<TypeTool.Request, ToolContext, TypeT
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new BaseSandboxTools().browser_type(
+        String result = new SandboxTools().browser_type(
                 request.element, request.ref, request.text, request.submit, request.slowly);
         return new Response(result, "Browser type completed");
     }
@@ -22,7 +22,17 @@ public class TypeTool implements BiFunction<TypeTool.Request, ToolContext, TypeT
             @JsonProperty(required = true, value = "text") String text,
             @JsonProperty("submit") Boolean submit,
             @JsonProperty("slowly") Boolean slowly
-    ) { }
+    ) { 
+        public Request {
+            // 为可选参数提供默认值处理
+            if (submit == null) {
+                submit = false;
+            }
+            if (slowly == null) {
+                slowly = false;
+            }
+        }
+    }
 
     @JsonClassDescription("The result contains browser tool output and message")
     public record Response(String result, String message) {}

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.chat.model.ToolContext;
-import runtime.domain.tools.service.BaseSandboxTools;
+import runtime.domain.tools.service.SandboxTools;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -17,7 +17,7 @@ public class EditFileTool implements BiFunction<EditFileTool.Request, ToolContex
     @Override
     public Response apply(Request request, ToolContext toolContext) {
         try {
-            BaseSandboxTools tools = new BaseSandboxTools();
+            SandboxTools tools = new SandboxTools();
             String result = tools.fs_edit_file(request.path, request.edits);
             return new Response(result, "Filesystem edit_file completed");
         } catch (Exception e) {
@@ -30,7 +30,7 @@ public class EditFileTool implements BiFunction<EditFileTool.Request, ToolContex
             @JsonPropertyDescription("Path to the file to edit")
             String path,
             @JsonProperty(required = true, value = "edits")
-            @JsonPropertyDescription("Line-based edits list")
+            @JsonPropertyDescription("Array of edit objects with oldText and newText properties")
             Map<String, Object>[] edits
     ) { }
 

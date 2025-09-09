@@ -21,6 +21,8 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 import org.springframework.stereotype.Component;
+import runtime.domain.tools.service.base.RunPythonTool;
+import runtime.domain.tools.service.base.RunShellCommandTool;
 
 import java.util.List;
 
@@ -32,34 +34,46 @@ import java.util.List;
 @Component
 public class ToolsInit {
 
-	public List<ToolCallback> getTools() {
-		return List.of(
-			RunPythonCodeTools(),
-			RunShellCommandTools(),
-			ReadFileTool(),
-			ReadMultipleFilesTool(),
-			WriteFileTool(),
-			EditFileTool(),
-			CreateDirectoryTool(),
-			ListDirectoryTool(),
-			DirectoryTreeTool(),
-			MoveFileTool(),
-			SearchFilesTool(),
-			GetFileInfoTool(),
-			ListAllowedDirectoriesTool(),
-			BrowserNavigateTool(),
-			BrowserClickTool(),
-			BrowserTypeTool(),
-			BrowserTakeScreenshotTool(),
-			BrowserSnapshotTool(),
-			BrowserTabNewTool(),
-			BrowserTabSelectTool(),
-			BrowserTabCloseTool(),
-			BrowserWaitForTool(),
-			BrowserResizeTool(),
-			BrowserCloseTool()
-		);
-	}
+    public List<ToolCallback> getTools() {
+        return List.of(
+                RunPythonCodeTools(),
+                RunShellCommandTools(),
+                ReadFileTool(),
+                ReadMultipleFilesTool(),
+                WriteFileTool(),
+                EditFileTool(),
+                CreateDirectoryTool(),
+                ListDirectoryTool(),
+                DirectoryTreeTool(),
+                MoveFileTool(),
+                SearchFilesTool(),
+                GetFileInfoTool(),
+                ListAllowedDirectoriesTool(),
+                BrowserNavigateTool(),
+                BrowserClickTool(),
+                BrowserTypeTool(),
+                BrowserTakeScreenshotTool(),
+                BrowserSnapshotTool(),
+                BrowserTabNewTool(),
+                BrowserTabSelectTool(),
+                BrowserTabCloseTool(),
+                BrowserWaitForTool(),
+                BrowserResizeTool(),
+                BrowserCloseTool(),
+                BrowserConsoleMessagesTool(),
+                BrowserHandleDialogTool(),
+                BrowserFileUploadTool(),
+                BrowserPressKeyTool(),
+                BrowserNavigateBackTool(),
+                BrowserNavigateForwardTool(),
+                BrowserNetworkRequestsTool(),
+                BrowserPdfSaveTool(),
+                BrowserDragTool(),
+                BrowserHoverTool(),
+                BrowserSelectOptionTool(),
+                BrowserTabListTool()
+        );
+    }
 
     private ToolCallback RunPythonCodeTools() {
         return FunctionToolCallback
@@ -144,7 +158,7 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "paths": {"type": "array", "items": {"type": "string"}, "description": "Paths to files"}
+                                        "paths": {"type": "array", "items": {"type": "string"}, "description": "Paths to the files to read"}
                                     },
                                     "required": ["paths"],
                                     "description": "Filesystem read multiple files request"
@@ -167,7 +181,7 @@ public class ToolsInit {
                                     "type": "object",
                                     "properties": {
                                         "path": {"type": "string", "description": "Path to the file to write to"},
-                                        "content": {"type": "string", "description": "Content to write"}
+                                        "content": {"type": "string", "description": "Content to write into the file"}
                                     },
                                     "required": ["path", "content"],
                                     "description": "Filesystem write file request"
@@ -189,8 +203,20 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "path": {"type": "string"},
-                                        "edits": {"type": "array", "items": {"type": "object", "properties": {"oldText": {"type": "string"}, "newText": {"type": "string"}}, "required": ["oldText", "newText"], "additionalProperties": false}}
+                                        "path": {"type": "string", "description": "Path to the file to edit"},
+                                        "edits": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "oldText": {"type": "string", "description": "Text to search for - must match exactly"},
+                                                    "newText": {"type": "string", "description": "Text to replace with"}
+                                                },
+                                                "required": ["oldText", "newText"],
+                                                "additionalProperties": false
+                                            },
+                                            "description": "Array of edit objects with oldText and newText properties"
+                                        }
                                     },
                                     "required": ["path", "edits"],
                                     "description": "Filesystem edit file request"
@@ -212,7 +238,7 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "path": {"type": "string"}
+                                        "path": {"type": "string", "description": "Path to the directory to create"}
                                     },
                                     "required": ["path"],
                                     "description": "Filesystem create directory request"
@@ -234,7 +260,7 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "path": {"type": "string"}
+                                        "path": {"type": "string", "description": "Path to list contents"}
                                     },
                                     "required": ["path"],
                                     "description": "Filesystem list directory request"
@@ -256,7 +282,7 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "path": {"type": "string"}
+                                        "path": {"type": "string", "description": "Path to get tree structure"}
                                     },
                                     "required": ["path"],
                                     "description": "Filesystem directory tree request"
@@ -278,8 +304,8 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "source": {"type": "string"},
-                                        "destination": {"type": "string"}
+                                        "source": {"type": "string", "description": "Source path to move from"},
+                                        "destination": {"type": "string", "description": "Destination path to move to"}
                                     },
                                     "required": ["source", "destination"],
                                     "description": "Filesystem move file request"
@@ -301,9 +327,9 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "path": {"type": "string"},
-                                        "pattern": {"type": "string"},
-                                        "excludePatterns": {"type": "array", "items": {"type": "string"}}
+                                        "path": {"type": "string", "description": "Starting path for the search"},
+                                        "pattern": {"type": "string", "description": "Pattern to match files/directories"},
+                                        "excludePatterns": {"type": "array", "items": {"type": "string"}, "description": "Patterns to exclude from search"}
                                     },
                                     "required": ["path", "pattern"],
                                     "description": "Filesystem search files request"
@@ -325,7 +351,7 @@ public class ToolsInit {
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "path": {"type": "string"}
+                                        "path": {"type": "string", "description": "Path to the file or directory"}
                                     },
                                     "required": ["path"],
                                     "description": "Filesystem get file info request"
@@ -359,9 +385,9 @@ public class ToolsInit {
     // Browser tools
     private ToolCallback BrowserNavigateTool() {
         return FunctionToolCallback.builder(
-                "BrowserNavigateService",
-                new runtime.domain.tools.service.browser.NavigateTool()
-        ).description("Navigate to a URL")
+                        "BrowserNavigateService",
+                        new runtime.domain.tools.service.browser.NavigateTool()
+                ).description("Navigate to a URL")
                 .inputSchema("""
                         {
                             "type": "object",
@@ -377,9 +403,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserClickTool() {
         return FunctionToolCallback.builder(
-                "BrowserClickService",
-                new runtime.domain.tools.service.browser.ClickTool()
-        ).description("Perform click on a web page")
+                        "BrowserClickService",
+                        new runtime.domain.tools.service.browser.ClickTool()
+                ).description("Perform click on a web page")
                 .inputSchema("""
                         {
                             "type": "object",
@@ -395,9 +421,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserTypeTool() {
         return FunctionToolCallback.builder(
-                "BrowserTypeService",
-                new runtime.domain.tools.service.browser.TypeTool()
-        ).description("Type text into an element")
+                        "BrowserTypeService",
+                        new runtime.domain.tools.service.browser.TypeTool()
+                ).description("Type text into an element")
                 .inputSchema("""
                         {
                             "type": "object",
@@ -419,9 +445,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserTakeScreenshotTool() {
         return FunctionToolCallback.builder(
-                "BrowserTakeScreenshotService",
-                new runtime.domain.tools.service.browser.TakeScreenshotTool()
-        ).description("Take a screenshot of the current page")
+                        "BrowserTakeScreenshotService",
+                        new runtime.domain.tools.service.browser.TakeScreenshotTool()
+                ).description("Take a screenshot of the current page")
                 .inputSchema("""
                         {
                             "type": "object",
@@ -442,9 +468,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserSnapshotTool() {
         return FunctionToolCallback.builder(
-                "BrowserSnapshotService",
-                new runtime.domain.tools.service.browser.SnapshotTool()
-        ).description("Capture accessibility snapshot of the current page")
+                        "BrowserSnapshotService",
+                        new runtime.domain.tools.service.browser.SnapshotTool()
+                ).description("Capture accessibility snapshot of the current page")
                 .inputSchema("""
                         {"type": "object", "properties": {}, "required": [], "description": "Browser snapshot request"}
                         """)
@@ -455,9 +481,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserTabNewTool() {
         return FunctionToolCallback.builder(
-                "BrowserTabNewService",
-                new runtime.domain.tools.service.browser.TabNewTool()
-        ).description("Open a new tab")
+                        "BrowserTabNewService",
+                        new runtime.domain.tools.service.browser.TabNewTool()
+                ).description("Open a new tab")
                 .inputSchema("""
                         {"type": "object", "properties": {"url": {"type": "string"}}, "required": [], "description": "Browser new tab request"}
                         """)
@@ -468,9 +494,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserTabSelectTool() {
         return FunctionToolCallback.builder(
-                "BrowserTabSelectService",
-                new runtime.domain.tools.service.browser.TabSelectTool()
-        ).description("Select a tab by index")
+                        "BrowserTabSelectService",
+                        new runtime.domain.tools.service.browser.TabSelectTool()
+                ).description("Select a tab by index")
                 .inputSchema("""
                         {"type": "object", "properties": {"index": {"type": "number"}}, "required": ["index"], "description": "Browser select tab request"}
                         """)
@@ -481,9 +507,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserTabCloseTool() {
         return FunctionToolCallback.builder(
-                "BrowserTabCloseService",
-                new runtime.domain.tools.service.browser.TabCloseTool()
-        ).description("Close a tab")
+                        "BrowserTabCloseService",
+                        new runtime.domain.tools.service.browser.TabCloseTool()
+                ).description("Close a tab")
                 .inputSchema("""
                         {"type": "object", "properties": {"index": {"type": "number"}}, "required": [], "description": "Browser close tab request"}
                         """)
@@ -494,9 +520,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserWaitForTool() {
         return FunctionToolCallback.builder(
-                "BrowserWaitForService",
-                new runtime.domain.tools.service.browser.WaitForTool()
-        ).description("Wait for conditions")
+                        "BrowserWaitForService",
+                        new runtime.domain.tools.service.browser.WaitForTool()
+                ).description("Wait for conditions")
                 .inputSchema("""
                         {
                             "type": "object",
@@ -512,9 +538,9 @@ public class ToolsInit {
 
     private ToolCallback BrowserResizeTool() {
         return FunctionToolCallback.builder(
-                "BrowserResizeService",
-                new runtime.domain.tools.service.browser.ResizeTool()
-        ).description("Resize browser window")
+                        "BrowserResizeService",
+                        new runtime.domain.tools.service.browser.ResizeTool()
+                ).description("Resize browser window")
                 .inputSchema("""
                         {"type": "object", "properties": {"width": {"type": "number"}, "height": {"type": "number"}}, "required": ["width", "height"], "description": "Browser resize request"}
                         """)
@@ -525,13 +551,225 @@ public class ToolsInit {
 
     private ToolCallback BrowserCloseTool() {
         return FunctionToolCallback.builder(
-                "BrowserCloseService",
-                new runtime.domain.tools.service.browser.CloseTool()
-        ).description("Close current page")
+                        "BrowserCloseService",
+                        new runtime.domain.tools.service.browser.CloseTool()
+                ).description("Close current page")
                 .inputSchema("""
                         {"type": "object", "properties": {}, "required": [], "description": "Browser close request"}
                         """)
                 .inputType(runtime.domain.tools.service.browser.CloseTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserConsoleMessagesTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserConsoleMessagesService",
+                        new runtime.domain.tools.service.browser.ConsoleMessagesTool()
+                ).description("Returns all console messages")
+                .inputSchema("""
+                        {"type": "object", "properties": {}, "required": [], "description": "Browser console messages request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.ConsoleMessagesTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserHandleDialogTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserHandleDialogService",
+                        new runtime.domain.tools.service.browser.HandleDialogTool()
+                ).description("Handle a dialog")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "accept": {"type": "boolean", "description": "Whether to accept the dialog"},
+                                "promptText": {"type": "string", "description": "The text of the prompt in case of a prompt dialog"}
+                            },
+                            "required": ["accept"],
+                            "description": "Browser handle dialog request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.HandleDialogTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserFileUploadTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserFileUploadService",
+                        new runtime.domain.tools.service.browser.FileUploadTool()
+                ).description("Upload one or multiple files")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "paths": {"type": "array", "items": {"type": "string"}, "description": "The absolute paths to the files to upload"}
+                            },
+                            "required": ["paths"],
+                            "description": "Browser file upload request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.FileUploadTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserPressKeyTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserPressKeyService",
+                        new runtime.domain.tools.service.browser.PressKeyTool()
+                ).description("Press a key on the keyboard")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "key": {"type": "string", "description": "Name of the key to press or a character to generate"}
+                            },
+                            "required": ["key"],
+                            "description": "Browser press key request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.PressKeyTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserNavigateBackTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserNavigateBackService",
+                        new runtime.domain.tools.service.browser.NavigateBackTool()
+                ).description("Go back to the previous page")
+                .inputSchema("""
+                        {"type": "object", "properties": {}, "required": [], "description": "Browser navigate back request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.NavigateBackTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserNavigateForwardTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserNavigateForwardService",
+                        new runtime.domain.tools.service.browser.NavigateForwardTool()
+                ).description("Go forward to the next page")
+                .inputSchema("""
+                        {"type": "object", "properties": {}, "required": [], "description": "Browser navigate forward request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.NavigateForwardTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserNetworkRequestsTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserNetworkRequestsService",
+                        new runtime.domain.tools.service.browser.NetworkRequestsTool()
+                ).description("Returns all network requests since loading the page")
+                .inputSchema("""
+                        {"type": "object", "properties": {}, "required": [], "description": "Returns all network requests since loading the page"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.NetworkRequestsTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserPdfSaveTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserPdfSaveService",
+                        new runtime.domain.tools.service.browser.PdfSaveTool()
+                ).description("Save page as PDF")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "filename": {"type": "string", "description": "File name to save the pdf to"}
+                            },
+                            "required": [],
+                            "description": "Browser PDF save request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.PdfSaveTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserDragTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserDragService",
+                        new runtime.domain.tools.service.browser.DragTool()
+                ).description("Perform drag and drop between two elements")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "startElement": {"type": "string", "description": "Human-readable source element description"},
+                                "startRef": {"type": "string", "description": "Exact source element reference from the page snapshot"},
+                                "endElement": {"type": "string", "description": "Human-readable target element description"},
+                                "endRef": {"type": "string", "description": "Exact target element reference from the page snapshot"}
+                            },
+                            "required": ["startElement", "startRef", "endElement", "endRef"],
+                            "description": "Browser drag request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.DragTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserHoverTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserHoverService",
+                        new runtime.domain.tools.service.browser.HoverTool()
+                ).description("Hover over an element on a page")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "element": {"type": "string", "description": "Human-readable element description"},
+                                "ref": {"type": "string", "description": "Exact target element reference from the page snapshot"}
+                            },
+                            "required": ["element", "ref"],
+                            "description": "Browser hover request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.HoverTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserSelectOptionTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserSelectOptionService",
+                        new runtime.domain.tools.service.browser.SelectOptionTool()
+                ).description("Select an option in a dropdown")
+                .inputSchema("""
+                        {
+                            "type": "object",
+                            "properties": {
+                                "element": {"type": "string", "description": "Human-readable element description"},
+                                "ref": {"type": "string", "description": "Exact target element reference from the page snapshot"},
+                                "values": {"type": "array", "items": {"type": "string"}, "description": "Array of values to select in the dropdown"}
+                            },
+                            "required": ["element", "ref", "values"],
+                            "description": "Browser select option request"
+                        }
+                        """)
+                .inputType(runtime.domain.tools.service.browser.SelectOptionTool.Request.class)
+                .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+                .build();
+    }
+
+    private ToolCallback BrowserTabListTool() {
+        return FunctionToolCallback.builder(
+                        "BrowserTabListService",
+                        new runtime.domain.tools.service.browser.TabListTool()
+                ).description("List browser tabs")
+                .inputSchema("""
+                        {"type": "object", "properties": {}, "required": [], "description": "Browser tab list request"}
+                        """)
+                .inputType(runtime.domain.tools.service.browser.TabListTool.Request.class)
                 .toolMetadata(ToolMetadata.builder().returnDirect(false).build())
                 .build();
     }

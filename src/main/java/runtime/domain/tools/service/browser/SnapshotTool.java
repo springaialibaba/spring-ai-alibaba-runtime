@@ -2,7 +2,7 @@ package runtime.domain.tools.service.browser;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import org.springframework.ai.chat.model.ToolContext;
-import runtime.domain.tools.service.BaseSandboxTools;
+import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
@@ -10,7 +10,7 @@ public class SnapshotTool implements BiFunction<SnapshotTool.Request, ToolContex
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new BaseSandboxTools().browser_snapshot();
+        String result = new SandboxTools().browser_snapshot();
         return new Response(result, "Browser snapshot completed");
     }
 

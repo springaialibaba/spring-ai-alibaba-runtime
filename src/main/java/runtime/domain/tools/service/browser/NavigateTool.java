@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.chat.model.ToolContext;
-import runtime.domain.tools.service.BaseSandboxTools;
+import runtime.domain.tools.service.SandboxTools;
 
 import java.util.function.BiFunction;
 
@@ -12,7 +12,7 @@ public class NavigateTool implements BiFunction<NavigateTool.Request, ToolContex
 
     @Override
     public Response apply(Request request, ToolContext toolContext) {
-        String result = new BaseSandboxTools().browser_navigate(request.url);
+        String result = new SandboxTools().browser_navigate(request.url);
         return new Response(result, "Browser navigate completed");
     }
 

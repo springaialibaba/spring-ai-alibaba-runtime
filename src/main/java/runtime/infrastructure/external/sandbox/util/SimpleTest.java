@@ -1,6 +1,6 @@
 package runtime.infrastructure.external.sandbox.util;
 
-import runtime.domain.tools.service.BaseSandboxTools;
+import runtime.domain.tools.service.SandboxTools;
 
 /**
  * 简化的IPython功能测试
@@ -10,7 +10,7 @@ public class SimpleTest {
     public static void main(String[] args) {
         System.out.println("=== 开始测试IPython功能 ===");
         
-        BaseSandboxTools tools = new BaseSandboxTools();
+        SandboxTools tools = new SandboxTools();
         
         try {
             // 测试简单的Python代码
