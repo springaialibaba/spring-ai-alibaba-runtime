@@ -202,6 +202,34 @@ public class SandboxManager {
     }
 
     /**
+     * 清理所有沙箱容器
+     */
+    public void cleanupAllSandboxes() {
+        if (sandboxMap == null || sandboxMap.isEmpty()) {
+            System.out.println("没有需要清理的沙箱容器");
+            return;
+        }
+
+        System.out.println("开始清理所有沙箱容器...");
+        System.out.println("当前沙箱数量: " + sandboxMap.size());
+        System.out.println("沙箱类型: " + sandboxMap.keySet());
+
+        for (SandboxType sandboxType : new HashSet<>(sandboxMap.keySet())) {
+            try {
+                System.out.println("正在清理 " + sandboxType + " 沙箱...");
+                stopAndRemoveSandbox(sandboxType);
+                System.out.println(sandboxType + " 沙箱清理完成");
+            } catch (Exception e) {
+                System.err.println("清理 " + sandboxType + " 沙箱时出错: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        sandboxMap.clear();
+        System.out.println("所有沙箱容器清理完成！");
+    }
+
+    /**
      * 查找可用的端口
      * @param count 需要查找的端口数量
      * @return 可用端口列表

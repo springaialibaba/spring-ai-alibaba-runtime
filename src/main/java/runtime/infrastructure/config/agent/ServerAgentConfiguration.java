@@ -203,19 +203,15 @@ public class ServerAgentConfiguration {
 
     private List<ToolCallback> convertToolCallbacks(List<String> toolNames) {
         if (toolNames == null || toolNames.isEmpty()) {
-            System.out.println("没有配置工具，使用默认工具集");
-            return toolsInit.getAllTools();
+            return List.of();
         }
 
         System.out.println("从配置加载工具: " + toolNames);
         List<ToolCallback> tools = toolsInit.getToolsByName(toolNames);
-        
+
         if (tools.isEmpty()) {
-            System.out.println("警告: 没有找到任何有效的工具，使用默认工具集");
-            return toolsInit.getAllTools();
+            return List.of();
         }
-        
-        System.out.println("成功加载 " + tools.size() + " 个工具");
         return tools;
     }
 
@@ -388,13 +384,18 @@ public class ServerAgentConfiguration {
     public BaseAgent rootAgent(Map<String, BaseAgent> agents, AgentProperties config) throws GraphStateException {
         // 从配置中查找根agent
         AgentProperties.AgentDefinition rootAgentDef = config.getAgents().stream().filter(agent -> Boolean.TRUE.equals(agent.getIsRoot())).findFirst().orElse(null);
+        BaseAgent rootAgent;
 
         if (rootAgentDef == null) {
-            throw new IllegalStateException("No root agent found in configuration");
+            if (agents.size() == 1) {
+                rootAgent = agents.values().iterator().next();
+                return rootAgent;
+            } else {
+                throw new IllegalStateException("No root agent found in configuration");
+            }
         }
 
-        // 根agent已经在agents Map中创建了，直接返回
-        BaseAgent rootAgent = agents.get(rootAgentDef.getName());
+        rootAgent = agents.get(rootAgentDef.getName());
         if (rootAgent == null) {
             throw new IllegalStateException("Root agent not found in agents map: " + rootAgentDef.getName());
         }

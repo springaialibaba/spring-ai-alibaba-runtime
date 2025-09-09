@@ -29,6 +29,14 @@ public class SandboxTools {
     }
 
     /**
+     * 获取共享的SandboxManager实例
+     * @return SandboxManager实例
+     */
+    public SandboxManager getSandboxManager() {
+        return sandboxManager;
+    }
+
+    /**
      * 执行IPython代码
      *
      * @param code 要执行的Python代码

@@ -19,9 +19,8 @@ public abstract class BaseSandboxTest {
     // 获取共享的SandboxManager实例
     private SandboxManager getSandboxManager() {
         try {
-            java.lang.reflect.Field field = SandboxTools.class.getDeclaredField("SHARED_SANDBOX_MANAGER");
-            field.setAccessible(true);
-            return (SandboxManager) field.get(null);
+            SandboxTools sandboxTools = new SandboxTools();
+            return sandboxTools.getSandboxManager();
         } catch (Exception e) {
             System.err.println("无法获取共享SandboxManager实例: " + e.getMessage());
             return new SandboxManager();
