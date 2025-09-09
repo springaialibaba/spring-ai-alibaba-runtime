@@ -5,7 +5,7 @@ spring:
   config:
     import:
       - classpath:application-nacos.yml
-      - classpath:application-new-agent.yml
+      - classpath:application-agent.yml
       - classpath:application-runtime.yml
       - classpath:application-memory.yml
   application:

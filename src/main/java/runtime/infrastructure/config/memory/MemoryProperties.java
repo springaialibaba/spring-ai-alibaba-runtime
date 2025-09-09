@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class MemoryProperties {
     
     /**
-     * 记忆服务类型：memory 或 redis
+     * 记忆服务类型：memory 或 redis 或 mysql
      */
     private String type = "memory";
     
@@ -26,7 +26,7 @@ public class MemoryProperties {
     /**
      * 默认会话ID
      */
-    private String defaultSessionId = "default";
+    private String defaultSessionId = "default_session";
     
     /**
      * 搜索时的默认top_k值

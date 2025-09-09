@@ -10,6 +10,7 @@ import runtime.domain.memory.model.MessageType;
 import runtime.domain.memory.model.Session;
 import runtime.domain.memory.service.MemoryService;
 import runtime.domain.memory.service.SessionHistoryService;
+import runtime.infrastructure.config.memory.MemoryProperties;
 import runtime.shared.context.ContextManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,9 @@ public class MemoryController {
     @Autowired
     private ContextManager contextManager;
     
+    @Autowired
+    private MemoryProperties memoryProperties;
+    
     /**
      * 获取用户的所有记忆
      * 
@@ -45,8 +49,8 @@ public class MemoryController {
     @GetMapping("/user/{userId}")
     public CompletableFuture<ResponseEntity<MemoryResponse>> getUserMemories(
             @PathVariable String userId,
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @RequestParam(required = false) Integer pageNum,
+            @RequestParam(required = false) Integer pageSize) {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -55,9 +59,13 @@ public class MemoryController {
                     return ResponseEntity.ok(MemoryResponse.error("记忆服务未启用"));
                 }
                 
+                // 使用配置的默认值
+                int actualPageNum = pageNum != null ? pageNum : 1;
+                int actualPageSize = pageSize != null ? pageSize : memoryProperties.getDefaultPageSize();
+                
                 Map<String, Object> filters = Map.of(
-                    "page_num", pageNum,
-                    "page_size", pageSize
+                    "page_num", actualPageNum,
+                    "page_size", actualPageSize
                 );
                 
                 List<Message> messages = memoryService.listMemory(userId, Optional.of(filters)).get();
@@ -126,7 +134,7 @@ public class MemoryController {
     public CompletableFuture<ResponseEntity<MemoryResponse>> searchMemories(
             @PathVariable String userId,
             @RequestParam String query,
-            @RequestParam(defaultValue = "5") int topK) {
+            @RequestParam(required = false) Integer topK) {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -135,11 +143,14 @@ public class MemoryController {
                     return ResponseEntity.ok(MemoryResponse.error("记忆服务未启用"));
                 }
                 
+                // 使用配置的默认值
+                int actualTopK = topK != null ? topK : memoryProperties.getDefaultTopK();
+                
                 // 创建搜索消息
                 MessageContent content = new MessageContent("text", query);
                 Message searchMessage = new Message(MessageType.MESSAGE, List.of(content));
                 
-                Map<String, Object> filters = Map.of("top_k", topK);
+                Map<String, Object> filters = Map.of("top_k", actualTopK);
                 List<Message> messages = memoryService.searchMemory(userId, List.of(searchMessage), Optional.of(filters)).get();
                 List<MemoryItem> memoryItems = convertToMemoryItems(messages, userId);
                 

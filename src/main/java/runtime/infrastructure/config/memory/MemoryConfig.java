@@ -35,15 +35,17 @@ public class MemoryConfig {
      */
     @Bean
     @ConditionalOnProperty(name = "memory.service.type", havingValue = "memory", matchIfMissing = true)
-    public MemoryService inMemoryMemoryService() {
-        return new InMemoryMemoryService();
+    public MemoryService inMemoryMemoryService(MemoryProperties memoryProperties) {
+        InMemoryMemoryService service = new InMemoryMemoryService();
+        service.setMemoryProperties(memoryProperties);
+        return service;
     }
     
     /**
      * 默认的会话历史服务（内存实现）
      */
     @Bean
-    @ConditionalOnProperty(name = "session.service.type", havingValue = "memory", matchIfMissing = true)
+    @ConditionalOnProperty(name = "memory.service.type", havingValue = "memory", matchIfMissing = true)
     public SessionHistoryService inMemorySessionHistoryService() {
         return new InMemorySessionHistoryService();
     }
@@ -53,15 +55,17 @@ public class MemoryConfig {
      */
     @Bean
     @ConditionalOnProperty(name = "memory.service.type", havingValue = "redis")
-    public MemoryService redisMemoryService(RedisTemplate<String, String> redisTemplate) {
-        return new RedisMemoryService(redisTemplate);
+    public MemoryService redisMemoryService(RedisTemplate<String, String> redisTemplate, MemoryProperties memoryProperties) {
+        RedisMemoryService service = new RedisMemoryService(redisTemplate);
+        service.setMemoryProperties(memoryProperties);
+        return service;
     }
     
     /**
      * Redis会话历史服务
      */
     @Bean
-    @ConditionalOnProperty(name = "session.service.type", havingValue = "redis")
+    @ConditionalOnProperty(name = "memory.service.type", havingValue = "redis")
     public SessionHistoryService redisSessionHistoryService(RedisTemplate<String, String> redisTemplate) {
         return new RedisSessionHistoryService(redisTemplate);
     }
@@ -80,11 +84,12 @@ public class MemoryConfig {
     @Bean
     @ConditionalOnProperty(name = "memory.service.type", havingValue = "mysql")
     public MemoryService mysqlMemoryService(MemoryRepository memoryRepository, ObjectMapper objectMapper, 
-                                          EmbeddingService embeddingService) {
+                                          EmbeddingService embeddingService, MemoryProperties memoryProperties) {
         MySQLMemoryService service = new MySQLMemoryService();
         service.setMemoryRepository(memoryRepository);
         service.setObjectMapper(objectMapper);
         service.setEmbeddingService(embeddingService);
+        service.setMemoryProperties(memoryProperties);
         return service;
     }
     
@@ -92,7 +97,7 @@ public class MemoryConfig {
      * MySQL会话历史服务
      */
     @Bean
-    @ConditionalOnProperty(name = "session.service.type", havingValue = "mysql")
+    @ConditionalOnProperty(name = "memory.service.type", havingValue = "mysql")
     public SessionHistoryService mysqlSessionHistoryService(SessionRepository sessionRepository, 
                                                            SessionMessageRepository sessionMessageRepository, 
                                                            ObjectMapper objectMapper) {

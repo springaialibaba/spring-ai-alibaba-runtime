@@ -4,6 +4,7 @@ import runtime.domain.memory.model.Message;
 import runtime.domain.memory.model.MessageContent;
 import runtime.domain.memory.service.EmbeddingService;
 import runtime.domain.memory.service.MemoryService;
+import runtime.infrastructure.config.memory.MemoryProperties;
 import runtime.infrastructure.persistence.memory.entity.MemoryEntity;
 import runtime.infrastructure.persistence.memory.repository.MemoryRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,11 +25,12 @@ import java.util.stream.Collectors;
 public class MySQLMemoryService implements MemoryService {
     
     private static final Logger logger = LoggerFactory.getLogger(MySQLMemoryService.class);
-    private static final String DEFAULT_SESSION_ID = "default";
+    private static final String DEFAULT_SESSION_ID = "default_session";
     
     private MemoryRepository memoryRepository;
     private ObjectMapper objectMapper;
     private EmbeddingService embeddingService;
+    private MemoryProperties memoryProperties;
     
     public void setMemoryRepository(MemoryRepository memoryRepository) {
         this.memoryRepository = memoryRepository;
@@ -40,6 +42,10 @@ public class MySQLMemoryService implements MemoryService {
     
     public void setEmbeddingService(EmbeddingService embeddingService) {
         this.embeddingService = embeddingService;
+    }
+    
+    public void setMemoryProperties(MemoryProperties memoryProperties) {
+        this.memoryProperties = memoryProperties;
     }
     
     @Override
@@ -148,7 +154,7 @@ public class MySQLMemoryService implements MemoryService {
                     }
                 }
                 // 获取top_k结果
-                int topK = 10; // 默认返回10条
+                int topK = memoryProperties != null ? memoryProperties.getDefaultTopK() : 10;
                 if (filters.isPresent() && filters.get().containsKey("top_k")) {
                     Object topKObj = filters.get().get("top_k");
                     if (topKObj instanceof Integer) {
@@ -178,12 +184,13 @@ public class MySQLMemoryService implements MemoryService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 int pageNum = 1;
-                int pageSize = 10;
+                int pageSize = memoryProperties != null ? memoryProperties.getDefaultPageSize() : 10;
                 
                 if (filters.isPresent()) {
                     Map<String, Object> filterMap = filters.get();
                     pageNum = (Integer) filterMap.getOrDefault("page_num", 1);
-                    pageSize = (Integer) filterMap.getOrDefault("page_size", 10);
+                    pageSize = (Integer) filterMap.getOrDefault("page_size", 
+                        memoryProperties != null ? memoryProperties.getDefaultPageSize() : 10);
                 }
                 
                 Pageable pageable = PageRequest.of(pageNum - 1, pageSize);

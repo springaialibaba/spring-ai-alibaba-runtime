@@ -1,4 +1,4 @@
-# MySQL记忆服务配置示例
+# 记忆服务配置示例
 memory:
   service:
     # 服务类型：memory（内存）、redis 或 mysql
@@ -7,18 +7,11 @@ memory:
     auto-start: true
     # 是否在启动时执行健康检查
     health-check-on-start: true
-    # 默认会话ID
-    default-session-id: "default"
     # 搜索时的默认top_k值
     default-top-k: 5
     # 分页时的默认页面大小
     default-page-size: 10
 
-# 会话服务配置
-session:
-  service:
-    # 服务类型：memory（内存）、redis 或 mysql
-    type: redis
 
 # MySQL数据库配置
 #spring:
@@ -77,5 +70,3 @@ spring:
 logging:
   level:
     com.alibaba.cloud.ai.a2a.server.memory: INFO
-#    org.hibernate.SQL: DEBUG
-#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

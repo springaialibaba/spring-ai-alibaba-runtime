@@ -7,6 +7,6 @@ import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @EnableConfigurationProperties(AgentProperties.class)
-@PropertySource(value = "classpath:application-new-agent.yml", factory = YamlPropertySourceFactory.class)
+@PropertySource(value = "classpath:application-agent.yml", factory = YamlPropertySourceFactory.class)
 public class AgentConfig {
 }

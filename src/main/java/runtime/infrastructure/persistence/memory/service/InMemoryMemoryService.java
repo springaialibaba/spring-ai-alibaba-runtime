@@ -4,6 +4,7 @@ import runtime.domain.memory.model.Message;
 import runtime.domain.memory.model.MessageContent;
 import runtime.domain.memory.model.MessageType;
 import runtime.domain.memory.service.MemoryService;
+import runtime.infrastructure.config.memory.MemoryProperties;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -16,7 +17,8 @@ import java.util.stream.Collectors;
 public class InMemoryMemoryService implements MemoryService {
     
     private final Map<String, Map<String, List<Message>>> store = new ConcurrentHashMap<>();
-    private static final String DEFAULT_SESSION_ID = "default";
+    private static final String DEFAULT_SESSION_ID = "default_session";
+    private MemoryProperties memoryProperties;
     
     @Override
     public CompletableFuture<Void> start() {
@@ -107,7 +109,8 @@ public class InMemoryMemoryService implements MemoryService {
             if (filters.isPresent()) {
                 Map<String, Object> filterMap = filters.get();
                 int pageNum = (Integer) filterMap.getOrDefault("page_num", 1);
-                int pageSize = (Integer) filterMap.getOrDefault("page_size", 10);
+                int pageSize = (Integer) filterMap.getOrDefault("page_size", 
+                    memoryProperties != null ? memoryProperties.getDefaultPageSize() : 10);
                 
                 int startIndex = (pageNum - 1) * pageSize;
                 int endIndex = Math.min(startIndex + pageSize, allMessages.size());
@@ -166,5 +169,12 @@ public class InMemoryMemoryService implements MemoryService {
         }
         
         return null;
+    }
+    
+    /**
+     * 设置记忆配置属性
+     */
+    public void setMemoryProperties(MemoryProperties memoryProperties) {
+        this.memoryProperties = memoryProperties;
     }
 }
