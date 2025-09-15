@@ -1,6 +1,6 @@
 package runtime;
 
-import runtime.infrastructure.config.agent.AgentProperties;
+import runtime.engine.infrastructure.config.agent.AgentProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

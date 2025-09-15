@@ -3,7 +3,8 @@ package runtime.domain.tools.service;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import runtime.infrastructure.external.sandbox.model.SandboxType;
+import runtime.sandbox.manager.model.SandboxType;
+import runtime.sandbox.tools.SandboxTools;
 
 /**
  * 工具覆盖率测试 - 确保所有工具都有对应的测试

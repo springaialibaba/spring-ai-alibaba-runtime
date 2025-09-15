@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-runtime.infrastructure.config.nacos.NacosConfiguration
-runtime.infrastructure.config.core.AgentRegistryConfiguration
+runtime.engine.infrastructure.config.nacos.NacosConfiguration
+runtime.engine.infrastructure.config.core.AgentRegistryConfiguration

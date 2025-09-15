@@ -2,8 +2,9 @@ package runtime.domain.tools.service;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import runtime.infrastructure.external.sandbox.SandboxManager;
-import runtime.infrastructure.external.sandbox.model.SandboxType;
+import runtime.sandbox.manager.SandboxManager;
+import runtime.sandbox.manager.model.SandboxType;
+import runtime.sandbox.tools.SandboxTools;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
