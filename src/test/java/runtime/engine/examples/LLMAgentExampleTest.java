@@ -86,7 +86,8 @@ public class LLMAgentExampleTest {
             AgentRequest request = createTestRequest();
             
             // 执行查询
-            Event result = runner.query(request).join();
+            List<Event> events = runner.streamQuery(request).collectList().block();
+            Event result = events != null && !events.isEmpty() ? events.get(events.size() - 1) : null;
             
             assertNotNull(result);
             assertTrue(result instanceof Message);
