@@ -1,0 +1,5 @@
+nacos:
+  address: localhost:8848
+  namespace: public
+  username: ${NACOS_USERNAME:nacos}
+  password: ${NACOS_PASSWORD}

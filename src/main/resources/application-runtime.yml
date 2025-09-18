@@ -1,0 +1,11 @@
+runtime:
+  model:
+    provider: dashscope
+    name: qwen-plus
+    apiKey: ${API_KEY}
+    options:
+      temperature: 0.3
+      top_p: 0.9
+      max_tokens: 4096
+      top_k: 1
+      chat_client_bean: optional_bean_name  # Spring Bean 覆盖入口

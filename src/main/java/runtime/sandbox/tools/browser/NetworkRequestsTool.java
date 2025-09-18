@@ -1,0 +1,24 @@
+package runtime.sandbox.tools.browser;
+
+import com.fasterxml.jackson.annotation.JsonClassDescription;
+import org.springframework.ai.chat.model.ToolContext;
+import runtime.sandbox.tools.SandboxTools;
+
+import java.util.function.BiFunction;
+
+/**
+ * 浏览器网络请求工具
+ */
+public class NetworkRequestsTool implements BiFunction<NetworkRequestsTool.Request, ToolContext, NetworkRequestsTool.Response> {
+
+    @Override
+    public Response apply(Request request, ToolContext toolContext) {
+        String result = new SandboxTools().browser_network_requests();
+        return new Response(result, "Browser network requests completed");
+    }
+
+    public record Request() { }
+
+    @JsonClassDescription("The result contains browser tool output and message")
+    public record Response(String result, String message) {}
+}

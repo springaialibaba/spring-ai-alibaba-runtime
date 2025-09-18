@@ -1,0 +1,155 @@
+agents: # ReactAgent/SequentialAgent/LlmRoutingAgent/
+  - name: "prose_writer_agent"
+    type: "ReactAgent"
+    description: "可以写各种散文"
+    input_key: "messages"
+    outputKey: "messages"
+
+    instruction: "你是一个专业的作家，擅长写各种散文。请根据用户的要求创作高质量的散文。"
+    max_iterations: 6
+
+    tools: 
+      - "write_file"      # 保存散文到文件
+      - "read_file"       # 读取参考文件
+      - "edit_file"       # 编辑散文内容
+      - "create_directory" # 创建作品目录
+      - "list_directory"  # 查看文件列表
+    resolver: toolCallbackResolver    # 存在时优先于 tools
+
+    chat_options: { }                  # 预留 Builder.chatOptions
+    compile_config: { }              # 预留 Builder.compileConfig
+
+    state:
+      strategies:
+        messages: append
+        response: replace
+
+    hooks: # 预留
+      pre_llm: [ ]
+      post_llm: [ ]
+      pre_tool: [ ]
+      post_tool: [ ]
+
+    model:
+      provider: dashscope
+      name: qwen-max
+      apiKey: ${API_KEY}
+      options:
+        temperature: 0.3
+        top_p: 0.9
+        max_tokens: 4096
+        top_k: 1
+        chat_client_bean: optional_bean_name  # Spring Bean 覆盖入口
+
+
+  - name: "poem_writer_agent"
+    type: "ReactAgent"
+    description: "可以写各种诗歌"
+    input_key: "messages"
+    outputKey: "messages"
+
+    instruction: "你是一个专业的作家，擅长写各种诗歌。请根据用户的要求创作高质量的诗歌。"
+    max_iterations: 6
+
+    tools: 
+      - "write_file"      # 保存诗歌到文件
+      - "read_file"       # 读取参考诗歌
+      - "edit_file"       # 编辑诗歌内容
+      - "create_directory" # 创建诗歌目录
+      - "search_files"    # 搜索相关诗歌文件
+    resolver: toolCallbackResolver    # 存在时优先于 tools
+
+    chat_options: { }                  # 预留 Builder.chatOptions
+    compile_config: { }              # 预留 Builder.compileConfig
+
+    state:
+      strategies:
+        messages: append
+        response: replace
+
+    hooks: # 预留
+      pre_llm: [ ]
+      post_llm: [ ]
+      pre_tool: [ ]
+      post_tool: [ ]
+
+
+  - name: "CodeExecuteAgent"
+    type: "ReactAgent"
+    description: "可以执行各种python代码"
+    input_key: "messages"
+    outputKey: "messages"
+
+    instruction: "你是一个专业的python代码执行者，擅长执行各种python代码。请根据用户的要求，编写并执行高质量的python代码，并交付给工具执行。"
+    max_iterations: 6
+
+    tools: 
+      - "python"          # 执行Python代码
+      - "shell"           # 执行Shell命令
+      - "write_file"      # 保存代码文件
+      - "read_file"       # 读取代码文件
+      - "edit_file"       # 编辑代码文件
+      - "create_directory" # 创建项目目录
+      - "list_directory"  # 查看文件列表
+      - "search_files"    # 搜索代码文件
+    resolver: toolCallbackResolver    # 存在时优先于 tools
+
+    chat_options: { }                  # 预留 Builder.chatOptions
+    compile_config: { }              # 预留 Builder.compileConfig
+
+    state:
+      strategies:
+        messages: append
+        response: replace
+
+    hooks: # 预留
+      pre_llm: [ ]
+      post_llm: [ ]
+      pre_tool: [ ]
+      post_tool: [ ]
+
+
+  - name: "RootAgent"
+    type: "LlmRoutingAgent"
+    isRoot: true
+    description: "助手代理"
+    input_key: "input"
+    outputKey: "topic"
+
+    instruction: "助手代理"
+    max_iterations: 6
+
+    tools: 
+      - "browser_navigate"     # 网页导航
+      - "browser_snapshot"     # 网页截图
+      - "browser_click"        # 点击元素
+      - "browser_type"         # 输入文本
+      - "browser_take_screenshot" # 截图
+      - "read_file"            # 读取文件
+      - "write_file"           # 写入文件
+      - "python"               # 执行Python
+      - "shell"                # 执行Shell
+    resolver: toolCallbackResolver    # 存在时优先于 tools
+
+    chat_options: { }                  # 预留 Builder.chatOptions
+    compile_config: { }              # 预留 Builder.compileConfig
+
+    state:
+      strategies:
+        input: replace
+        output: replace
+
+    hooks: # 预留
+      pre_llm: [ ]
+      post_llm: [ ]
+      pre_tool: [ ]
+      post_tool: [ ]
+
+    subAgentNames:
+      - "prose_writer_agent"
+      - "poem_writer_agent"
+      - "CodeExecuteAgent"
+
+registry:
+  type: "nacos"
+
