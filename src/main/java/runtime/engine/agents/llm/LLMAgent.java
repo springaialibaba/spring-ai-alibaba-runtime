@@ -11,10 +11,10 @@ import runtime.engine.schemas.agent.Content;
 import runtime.engine.schemas.agent.TextContent;
 import runtime.engine.memory.model.MessageType;
 
-import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * LLM智能体
@@ -36,7 +36,8 @@ public class LLMAgent extends BaseAgent {
     protected Flux<Event> execute(Context context) {
         return Flux.create(sink -> {
             try {
-                List<Map<String, Object>> openaiMessages = convertToOpenAiMessages(context.getCurrentMessages());
+                // 使用完整的上下文消息，包括历史对话
+                List<Map<String, Object>> openaiMessages = buildCompleteMessageHistory(context);
                 List<Map<String, Object>> tools = convertToOpenAiTools(context.getRequest().getTools());
 
                 Message message = new Message();
@@ -109,5 +110,60 @@ public class LLMAgent extends BaseAgent {
 
     private List<Map<String, Object>> convertToOpenAiTools(List<Object> tools) {
         return new ArrayList<>();
+    }
+    
+    /**
+     * 构建完整的消息历史，包括会话中的历史消息和当前消息
+     */
+    private List<Map<String, Object>> buildCompleteMessageHistory(Context context) {
+        List<Map<String, Object>> allMessages = new ArrayList<>();
+        
+        // 添加会话中的历史消息
+        if (context.getSession() != null && context.getSession().getMessages() != null) {
+            for (runtime.engine.schemas.agent.Message sessionMessage : context.getSession().getMessages()) {
+                Map<String, Object> messageMap = new HashMap<>();
+                messageMap.put("role", sessionMessage.getRole());
+                
+                List<Map<String, Object>> content = new ArrayList<>();
+                if (sessionMessage.getContent() != null) {
+                    for (Content msgContent : sessionMessage.getContent()) {
+                        Map<String, Object> contentItem = new HashMap<>();
+                        if (msgContent instanceof TextContent) {
+                            TextContent textContent = (TextContent) msgContent;
+                            contentItem.put("type", "text");
+                            contentItem.put("text", textContent.getText());
+                        }
+                        content.add(contentItem);
+                    }
+                }
+                messageMap.put("content", content);
+                allMessages.add(messageMap);
+            }
+        }
+        
+        // 添加当前请求的消息
+        if (context.getCurrentMessages() != null) {
+            for (runtime.engine.schemas.agent.Message currentMessage : context.getCurrentMessages()) {
+                Map<String, Object> messageMap = new HashMap<>();
+                messageMap.put("role", currentMessage.getRole());
+                
+                List<Map<String, Object>> content = new ArrayList<>();
+                if (currentMessage.getContent() != null) {
+                    for (Content msgContent : currentMessage.getContent()) {
+                        Map<String, Object> contentItem = new HashMap<>();
+                        if (msgContent instanceof TextContent) {
+                            TextContent textContent = (TextContent) msgContent;
+                            contentItem.put("type", "text");
+                            contentItem.put("text", textContent.getText());
+                        }
+                        content.add(contentItem);
+                    }
+                }
+                messageMap.put("content", content);
+                allMessages.add(messageMap);
+            }
+        }
+        
+        return allMessages;
     }
 }

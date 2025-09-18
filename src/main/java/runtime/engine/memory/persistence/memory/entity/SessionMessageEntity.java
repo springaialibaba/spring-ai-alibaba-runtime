@@ -49,7 +49,6 @@ public class SessionMessageEntity {
         this.content = content;
     }
     
-    // Getters and Setters
     public Long getId() {
         return id;
     }

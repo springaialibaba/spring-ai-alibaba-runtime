@@ -13,14 +13,13 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * 沙箱工具类，提供各种沙箱操作功能
+ * 沙箱工具类
  */
 public class SandboxTools {
     private final Logger logger = Logger.getLogger(SandboxTools.class.getName());
     private final SandboxManager sandboxManager;
     private final HttpClient httpClient;
     
-    // 使用单例模式确保所有实例共享同一个SandboxManager
     private static final SandboxManager SHARED_SANDBOX_MANAGER = new SandboxManager();
 
     public SandboxTools() {
@@ -28,50 +27,33 @@ public class SandboxTools {
         this.httpClient = new HttpClient();
     }
 
-    /**
-     * 获取共享的SandboxManager实例
-     * @return SandboxManager实例
-     */
     public SandboxManager getSandboxManager() {
         return sandboxManager;
     }
 
-    /**
-     * 执行IPython代码
-     *
-     * @param code 要执行的Python代码
-     * @return 执行结果
-     */
     public String run_ipython_cell(String code) {
         try {
-            // 获取沙箱
             SandboxType sandboxType = SandboxType.FILESYSTEM;
             ContainerModel sandbox = sandboxManager.getSandbox(sandboxType);
 
-            // 确保沙箱正在运行
             if (!isSandboxRunning(sandboxType)) {
                 System.out.println("沙箱未运行，正在启动...");
                 sandboxManager.startSandbox(sandboxType);
             }
 
-            // 构建请求URL
             String baseUrl = sandbox.getBaseUrl();
             String authToken = sandbox.getAuthToken();
             String requestUrl = baseUrl + "/tools/run_ipython_cell";
 
-            // 健康检查等待
             waitUntilHealthy(sandbox);
 
-            // 构建请求头
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", "Bearer " + authToken);
             headers.put("Content-Type", "application/json");
             headers.put("Host", "localhost:" + sandbox.getPorts()[0]);
 
-            // 构建请求体
             IpythonRequest request = new IpythonRequest(code);
 
-            // 发送请求
             String response = httpClient.postJson(requestUrl, headers, request);
 
             return response;
@@ -86,31 +68,25 @@ public class SandboxTools {
 
     public String run_shell_command(String command) {
         try {
-            // 获取沙箱
             SandboxType sandboxType = SandboxType.FILESYSTEM;
             ContainerModel sandbox = sandboxManager.getSandbox(sandboxType);
 
-            // 确保沙箱正在运行
             if (!isSandboxRunning(sandboxType)) {
                 System.out.println("沙箱未运行，正在启动...");
                 sandboxManager.startSandbox(sandboxType);
             }
 
-            // 构建请求URL
             String baseUrl = sandbox.getBaseUrl();
             String authToken = sandbox.getAuthToken();
             String requestUrl = baseUrl + "/tools/run_shell_command";
 
-            // 健康检查等待
             waitUntilHealthy(sandbox);
 
-            // 构建请求头
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", "Bearer " + authToken);
             headers.put("Content-Type", "application/json");
             headers.put("Host", "localhost:" + sandbox.getPorts()[0]);
 
-            // 构建请求体
             ShellCommandRequest request = new ShellCommandRequest(command);
 
             return httpClient.postJson(requestUrl, headers, request);
@@ -123,13 +99,6 @@ public class SandboxTools {
         }
     }
 
-    /**
-     * 通用：调用沙箱 MCP 工具
-     *
-     * @param toolName 工具名称（如 read_file、write_file 等）
-     * @param arguments 参数 Map
-     * @return 执行结果 JSON 字符串
-     */
     public String call_mcp_tool(String toolName, Map<String, Object> arguments) {
         return call_mcp_tool(SandboxType.FILESYSTEM, toolName, arguments);
     }
@@ -147,7 +116,6 @@ public class SandboxTools {
             String authToken = sandbox.getAuthToken();
             String requestUrl = baseUrl + "/mcp/call_tool";
 
-            // 健康检查等待
             waitUntilHealthy(sandbox);
 
             Map<String, String> headers = new HashMap<>();
@@ -168,7 +136,6 @@ public class SandboxTools {
         }
     }
 
-    // 下面是 filesystem 工具的便捷封装
     public String fs_read_file(String path) {
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
@@ -243,7 +210,6 @@ public class SandboxTools {
         return call_mcp_tool("list_allowed_directories", new HashMap<>());
     }
 
-    // browser 工具封装
     public String browser_navigate(String url) {
         Map<String, Object> args = new HashMap<>();
         args.put("url", url);
@@ -390,12 +356,6 @@ public class SandboxTools {
         return call_mcp_tool(SandboxType.BROWSER, "browser_tab_list", new HashMap<>());
     }
 
-    /**
-     * 检查沙箱是否正在运行
-     *
-     * @param sandboxType 沙箱模型
-     * @return 是否正在运行
-     */
     private boolean isSandboxRunning(SandboxType sandboxType) {
         try {
             String status = sandboxManager.getSandboxStatus(sandboxType);
@@ -406,9 +366,6 @@ public class SandboxTools {
         }
     }
 
-    /**
-     * 等待容器内 API 服务健康（/healthz 返回 200）
-     */
     private void waitUntilHealthy(ContainerModel sandbox) {
         String baseUrl = sandbox.getBaseUrl();
         String authToken = sandbox.getAuthToken();
@@ -424,7 +381,7 @@ public class SandboxTools {
         long timeoutMs = 60_000;
         long sleepMs = 700;
         try {
-            Thread.sleep(1500); // 容器进程冷启动等待
+            Thread.sleep(1500);
         } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
@@ -433,7 +390,6 @@ public class SandboxTools {
                     return;
                 }
             } catch (Exception ignored) {
-                // ignore and retry
             }
             try {
                 Thread.sleep(sleepMs);
@@ -444,9 +400,6 @@ public class SandboxTools {
         }
     }
 
-    /**
-     * 关闭资源
-     */
     public void close() {
         try {
             if (httpClient != null) {

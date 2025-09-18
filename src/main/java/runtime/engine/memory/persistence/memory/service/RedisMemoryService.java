@@ -106,7 +106,6 @@ public class RedisMemoryService implements MemoryService {
                 Set<String> keywords = Arrays.stream(query.toLowerCase().split("\\s+"))
                         .collect(Collectors.toSet());
 
-                System.out.println("keywords: "+keywords);
                 
                 HashOperations<String, String, String> hashOps = redisTemplate.opsForHash();
                 Map<String, String> allFields = hashOps.entries(key);

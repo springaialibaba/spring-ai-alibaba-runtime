@@ -2,6 +2,7 @@ package runtime.engine.memory.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * 会话类，表示一个对话会话
@@ -23,7 +24,7 @@ public class Session {
     public Session(String id, String userId) {
         this.id = id;
         this.userId = userId;
-        this.messages = List.of();
+        this.messages = new ArrayList<>();
     }
     
     public Session(String id, String userId, List<Message> messages) {

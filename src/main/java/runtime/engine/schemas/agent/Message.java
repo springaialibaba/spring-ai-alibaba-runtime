@@ -8,7 +8,6 @@ import runtime.engine.memory.model.MessageType;
 
 /**
  * 消息类
- * 对应Python版本的agent_schemas.py中的Message类
  */
 public class Message extends Event {
     
@@ -90,12 +89,7 @@ public class Message extends Event {
         this.usage = usage;
     }
     
-    /**
-     * 从OpenAI消息创建Message
-     * 对应Python版本的from_openai_message方法
-     */
     public static Message fromOpenAiMessage(Map<String, Object> message) {
-        // 处理OpenAI格式的消息
         Message msg = new Message();
         
         String role = (String) message.get("role");
@@ -103,11 +97,9 @@ public class Message extends Event {
         
         Object contentObj = message.get("content");
         if (contentObj instanceof String) {
-            // 简单文本内容
             TextContent textContent = new TextContent((String) contentObj);
             msg.setContent(List.of(textContent));
         } else if (contentObj instanceof List) {
-            // 复杂内容列表
             List<Content> contents = new ArrayList<>();
             List<Map<String, Object>> contentList = (List<Map<String, Object>>) contentObj;
             for (Map<String, Object> contentItem : contentList) {
@@ -124,7 +116,6 @@ public class Message extends Event {
             msg.setContent(contents);
         }
         
-        // 处理工具调用
         if ("assistant".equals(role) && message.containsKey("tool_calls")) {
             List<Map<String, Object>> toolCalls = (List<Map<String, Object>>) message.get("tool_calls");
             List<Content> toolContents = new ArrayList<>();
@@ -142,7 +133,6 @@ public class Message extends Event {
             msg.setContent(toolContents);
         }
         
-        // 处理工具输出
         if ("tool".equals(role)) {
             FunctionCallOutput functionCallOutput = new FunctionCallOutput(
                 (String) message.get("tool_call_id"),
@@ -156,10 +146,6 @@ public class Message extends Event {
         return msg;
     }
     
-    /**
-     * 获取文本内容
-     * 对应Python版本的get_text_content方法
-     */
     public String getTextContent() {
         if (content == null) {
             return null;
@@ -173,10 +159,6 @@ public class Message extends Event {
         return null;
     }
     
-    /**
-     * 获取图像内容
-     * 对应Python版本的get_image_content方法
-     */
     public List<String> getImageContent() {
         List<String> images = new ArrayList<>();
         
@@ -192,16 +174,11 @@ public class Message extends Event {
         return images;
     }
     
-    /**
-     * 添加增量内容
-     * 对应Python版本的add_delta_content方法
-     */
     public Content addDeltaContent(Content newContent) {
         if (content == null) {
             content = new ArrayList<>();
         }
         
-        // 新内容
         if (newContent.getIndex() == null) {
             Content copy = copyContent(newContent);
             copy.setDelta(null);
@@ -215,31 +192,25 @@ public class Message extends Event {
             return newContent;
         }
         
-        // 增量内容
         if (Boolean.TRUE.equals(newContent.getDelta())) {
             Content preContent = content.get(newContent.getIndex());
             String type = preContent.getType();
             
-            // 追加文本
             if (ContentType.TEXT.equals(type)) {
                 TextContent preText = (TextContent) preContent;
                 TextContent newText = (TextContent) newContent;
                 preText.setText(preText.getText() + newText.getText());
             }
             
-            // 追加图像URL
             if (ContentType.IMAGE.equals(type)) {
                 ImageContent preImage = (ImageContent) preContent;
                 ImageContent newImage = (ImageContent) newContent;
                 preImage.setImageUrl(preImage.getImageUrl() + newImage.getImageUrl());
             }
             
-            // 追加数据
             if (ContentType.DATA.equals(type)) {
                 DataContent preData = (DataContent) preContent;
                 DataContent newData = (DataContent) newContent;
-                // 这里需要根据具体的数据结构来处理
-                // 暂时简单处理
             }
             
             newContent.setMsgId(this.id);
@@ -250,10 +221,6 @@ public class Message extends Event {
         return null;
     }
     
-    /**
-     * 内容完成
-     * 对应Python版本的content_completed方法
-     */
     public Content contentCompleted(int contentIndex) {
         if (content == null || contentIndex >= content.size()) {
             return null;
@@ -268,16 +235,11 @@ public class Message extends Event {
         return newContent;
     }
     
-    /**
-     * 添加内容
-     * 对应Python版本的add_content方法
-     */
     public Content addContent(Content newContent) {
         if (content == null) {
             content = new ArrayList<>();
         }
         
-        // 新内容
         if (newContent.getIndex() == null) {
             Content copy = copyContent(newContent);
             content.add(copy);
@@ -291,9 +253,6 @@ public class Message extends Event {
         return null;
     }
     
-    /**
-     * 复制内容
-     */
     private Content copyContent(Content original) {
         if (original instanceof TextContent) {
             TextContent text = (TextContent) original;

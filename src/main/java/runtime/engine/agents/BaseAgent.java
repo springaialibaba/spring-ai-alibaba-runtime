@@ -13,7 +13,6 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Agent抽象基类
- * 对应Python版本的base_agent.py中的Agent类
  */
 public abstract class BaseAgent implements Agent {
     
@@ -64,28 +63,20 @@ public abstract class BaseAgent implements Agent {
     @Override
     public CompletableFuture<Flux<Event>> runAsync(Context context) {
         return CompletableFuture.supplyAsync(() -> {
-            // 执行前回调
             executeBeforeCallbacks(context);
             
             try {
-                // 执行Agent逻辑
                 Flux<Event> eventFlux = execute(context);
                 
-                // 执行后回调
                 executeAfterCallbacks(context);
                 
                 return eventFlux;
             } catch (Exception e) {
-                // 错误处理
                 return Flux.error(e);
             }
         });
     }
     
-    /**
-     * 子类必须实现的执行方法
-     * 对应Python版本中需要子类实现的run_async方法
-     */
     protected abstract Flux<Event> execute(Context context);
     
     @Override
@@ -107,45 +98,32 @@ public abstract class BaseAgent implements Agent {
         return config;
     }
     
-    /**
-     * 获取额外参数
-     * 对应Python版本的kwargs
-     */
     public Map<String, Object> getKwargs() {
         return kwargs;
     }
     
-    /**
-     * 设置额外参数
-     */
     public void setKwargs(Map<String, Object> kwargs) {
         this.kwargs = kwargs != null ? kwargs : new HashMap<>();
     }
     
-    /**
-     * 执行前回调
-     */
     private void executeBeforeCallbacks(Context context) {
         for (AgentCallback callback : beforeCallbacks) {
             try {
                 callback.execute(context);
             } catch (Exception e) {
-                // 记录日志但不中断执行
-                System.err.println("Error in before callback: " + e.getMessage());
+                // 忽略回调错误
+                e.printStackTrace();
             }
         }
     }
     
-    /**
-     * 执行后回调
-     */
     private void executeAfterCallbacks(Context context) {
         for (AgentCallback callback : afterCallbacks) {
             try {
                 callback.execute(context);
             } catch (Exception e) {
-                // 记录日志但不中断执行
-                System.err.println("Error in after callback: " + e.getMessage());
+                // 忽略回调错误
+                e.printStackTrace();
             }
         }
     }

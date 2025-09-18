@@ -16,14 +16,12 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * AgentScope上下文适配器
- * 对应Python版本的agentscope_agent/agent.py中的AgentScopeContextAdapter类
  */
 public class AgentScopeContextAdapter {
     
     private final Context context;
     private final Map<String, Object> attributes;
     
-    // 适配后的属性
     private Object toolkit;
     private Object model;
     private Object memory;
@@ -35,17 +33,11 @@ public class AgentScopeContextAdapter {
         this.attributes = attributes;
     }
     
-    /**
-     * 初始化适配器
-     * 对应Python版本的initialize方法
-     */
     public CompletableFuture<Void> initialize() {
         return CompletableFuture.runAsync(() -> {
             try {
-                // 适配模型和格式化器
                 adaptModel();
                 
-                // 适配内存
                 adaptMemory();
                 
                 // 适配新消息
@@ -209,7 +201,6 @@ public class AgentScopeContextAdapter {
         }
     }
     
-    // Getter方法
     public Object getToolkit() {
         return toolkit;
     }

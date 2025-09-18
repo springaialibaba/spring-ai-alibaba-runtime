@@ -54,7 +54,6 @@ public class SessionEntity {
         this.lastActivity = LocalDateTime.now();
     }
     
-    // Getters and Setters
     public Long getId() {
         return id;
     }

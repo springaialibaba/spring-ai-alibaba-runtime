@@ -11,11 +11,9 @@ import java.util.Map;
 
 /**
  * 上下文类
- * 对应Python版本的context.py中的Context类
  */
 public class Context {
     
-    // 核心上下文
     private String userId;
     private Session session;
     private List<String> activateTools;
@@ -25,11 +23,9 @@ public class Context {
     private Map<String, Object> newMessageDict;
     private List<Map<String, Object>> messagesList;
     
-    // 服务
     private EnvironmentManager environmentManager;
     private ContextManager contextManager;
     
-    // Agent特定配置
     private Agent agent;
     private Map<String, Object> agentConfig;
     
@@ -136,10 +132,6 @@ public class Context {
         this.agentConfig = agentConfig;
     }
     
-    /**
-     * 获取所有消息
-     * 对应Python版本的messages属性
-     */
     public List<Map<String, Object>> getMessages() {
         if (newMessageDict != null) {
             List<Map<String, Object>> result = List.copyOf(messagesList);

@@ -8,6 +8,7 @@ import runtime.engine.memory.persistence.memory.service.InMemoryMemoryService;
 import runtime.engine.memory.persistence.session.InMemorySessionHistoryService;
 import runtime.engine.shared.ServiceManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -74,19 +75,26 @@ public class ContextManager extends ServiceManager {
      */
     public CompletableFuture<Session> composeSession(String userId, String sessionId) {
         return CompletableFuture.supplyAsync(() -> {
-            if (this.sessionHistoryService != null) {
+            SessionHistoryService sessionHistoryService = getSessionHistoryService();
+            if (sessionHistoryService != null) {
                 try {
-                    Optional<Session> sessionOpt = this.sessionHistoryService
+                    Optional<Session> sessionOpt = sessionHistoryService
                             .getSession(userId, sessionId).get();
                     if (sessionOpt.isEmpty()) {
-                        throw new RuntimeException("Session " + sessionId + " not found");
+                        // 如果Session不存在，创建一个新的
+                        return sessionHistoryService.createSession(userId, Optional.of(sessionId)).get();
                     }
                     return sessionOpt.get();
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to get session", e);
+                    // 如果获取失败，创建一个新的Session
+                    try {
+                        return sessionHistoryService.createSession(userId, Optional.of(sessionId)).get();
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Failed to get or create session", ex);
+                    }
                 }
             } else {
-                return new Session(sessionId, userId, List.of());
+                return new Session(sessionId, userId, new ArrayList<>());
             }
         });
     }
@@ -101,11 +109,14 @@ public class ContextManager extends ServiceManager {
     public CompletableFuture<Void> append(Session session, List<Message> eventOutput) {
         return CompletableFuture.runAsync(() -> {
             try {
-                if (this.sessionHistoryService != null) {
-                    this.sessionHistoryService.appendMessage(session, eventOutput).get();
+                SessionHistoryService sessionHistoryService = getSessionHistoryService();
+                if (sessionHistoryService != null) {
+                    sessionHistoryService.appendMessage(session, eventOutput).get();
                 }
-                if (this.memoryService != null) {
-                    this.memoryService.addMemory(session.getUserId(), eventOutput, Optional.of(session.getId())).get();
+                
+                MemoryService memoryService = getMemoryService();
+                if (memoryService != null) {
+                    memoryService.addMemory(session.getUserId(), eventOutput, Optional.of(session.getId())).get();
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Failed to append messages", e);
@@ -117,13 +128,13 @@ public class ContextManager extends ServiceManager {
      * 获取会话历史服务
      */
     public SessionHistoryService getSessionHistoryService() {
-        return sessionHistoryService;
+        return (SessionHistoryService) getService("session");
     }
     
     /**
      * 获取内存服务
      */
     public MemoryService getMemoryService() {
-        return memoryService;
+        return (MemoryService) getService("memory");
     }
 }
