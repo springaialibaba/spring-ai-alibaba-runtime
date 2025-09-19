@@ -168,7 +168,7 @@ public class RedisSessionHistoryService implements SessionHistoryService {
                     redisTemplate.opsForValue().set(key, sessionToJson(storedSession));
                     redisTemplate.opsForSet().add(getIndexKey(userId), sessionId);
                 } else {
-                    System.err.println("Warning: Session " + session.getId() + 
+                    System.err.println("Warning: Session " + session.getId() +
                             " not found in storage for append_message.");
                 }
             } catch (Exception e) {

@@ -37,7 +37,7 @@
         <spring-boot.version>3.4.5</spring-boot.version>
         <spring-ai.version>1.0.0</spring-ai.version>
         <spring-ai-alibaba.version>1.0.0.4-SNAPSHOT</spring-ai-alibaba.version>
-        <nacos-client.version>3.1.0-SNAPSHOT</nacos-client.version>
+        <nacos-client.version>3.1.0-BETA</nacos-client.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -120,7 +120,7 @@
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-graph-core</artifactId>
         </dependency>
-        
+
         <!-- Nacos Dependencies -->
         <dependency>
             <groupId>com.alibaba.nacos</groupId>
@@ -246,7 +246,7 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.33</version>
         </dependency>
-        
+
         <!-- Spring Data JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -32,7 +32,6 @@ public class AgentCardUtil {
         agentCard.setSkills(transferFromAgentCardInfoSkills(agentCardInfo.getSkills()));
         // TODO saa should support this auto.
         agentCard.setPreferredTransport("JSONRPC");
-        // TODO add other fields.
         return agentCard;
     }
     

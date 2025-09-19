@@ -101,7 +101,7 @@ public class InMemorySessionHistoryService implements SessionHistoryService {
                 if (storageSession != null) {
                     storageSession.getMessages().addAll(messages);
                 } else {
-                    System.err.println("Warning: Session " + session.getId() + 
+                    System.err.println("Warning: Session " + session.getId() +
                             " not found in storage for append_message.");
                 }
             }
