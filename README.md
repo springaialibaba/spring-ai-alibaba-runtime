@@ -14,7 +14,7 @@
 
 **Java implementation for AgentScope Runtime**
 
-*AgentScope Runtime tackles two critical challenges in agent development: secure sandboxed tool execution and scalable agent deployment. Built with a dual-core architecture, it provides framework-agnostic infrastructure for deploying agents with full observability and safe tool interactions.*
+This is the java implementation of [AgentScope Runtime](https://github.com/agentscope-ai/agentscope-runtime/). Please notice that this project is still experimental and under active development.
 
 </div>
 
