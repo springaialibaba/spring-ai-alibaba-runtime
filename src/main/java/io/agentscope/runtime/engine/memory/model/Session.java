@@ -16,6 +16,8 @@
 package io.agentscope.runtime.engine.memory.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,7 +40,7 @@ public class Session {
     public Session(String id, String userId) {
         this.id = id;
         this.userId = userId;
-        this.messages = List.of();
+        this.messages = new ArrayList<>();
     }
     
     public Session(String id, String userId, List<Message> messages) {
