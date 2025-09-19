@@ -3,8 +3,8 @@ package runtime.domain.tools.service;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import runtime.sandbox.manager.model.SandboxType;
-import runtime.sandbox.tools.SandboxTools;
+import io.agentscope.runtime.sandbox.manager.model.SandboxType;
+import io.agentscope.runtime.sandbox.tools.SandboxTools;
 
 /**
  * 测试需要页面元素交互的浏览器工具
