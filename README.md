@@ -22,9 +22,9 @@ This is the java implementation of [AgentScope Runtime](https://github.com/agent
 
 ## ✨ Key Features
 
-- **🏗️ Deployment Infrastructure**: Built-in services for session management, memory, and sandbox environment control
-- **🔒 Sandboxed Tool Execution**: Isolated sandboxes ensure safe tool execution without system compromise
-- ⚡ **Developer Friendly**: Simple deployment with powerful customization options
+- **Deployment Infrastructure**: Built-in services for session management, memory, and sandbox environment control
+- **Sandboxed Tool Execution**: Isolated sandboxes ensure safe tool execution without system compromise
+- **Developer Friendly**: Simple deployment with powerful customization options
 - :construction: **Framework Agnostic**: Not tied to any specific framework. Works seamlessly with popular open-source agent frameworks and custom implementations
 - :construction: **Observability**: Comprehensive tracing and monitoring for runtime operations
 
