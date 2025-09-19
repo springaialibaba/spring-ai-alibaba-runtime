@@ -1,13 +1,12 @@
 package io.agentscope.runtime.engine;
 
-import io.agentscope.runtime.engine.memory.model.Session;
 import reactor.core.publisher.Flux;
 import io.agentscope.runtime.engine.agents.Agent;
 import io.agentscope.runtime.engine.memory.context.ContextManager;
 import io.agentscope.runtime.engine.schemas.agent.AgentRequest;
 import io.agentscope.runtime.engine.schemas.agent.Event;
 import io.agentscope.runtime.engine.schemas.context.Context;
-
+import io.agentscope.runtime.engine.schemas.context.Session;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,7 @@ public class Runner implements AutoCloseable {
         return Flux.create(sink -> {
             try {
                 // 获取或创建Session
-                Session memorySession = getOrCreateSession(userId, sessionId);
+                io.agentscope.runtime.engine.memory.model.Session memorySession = getOrCreateSession(userId, sessionId);
 
                 Session session = new Session();
                 session.setId(memorySession.getId());
@@ -150,7 +149,7 @@ public class Runner implements AutoCloseable {
     /**
      * 获取或创建Session
      */
-    private Session getOrCreateSession(String userId, String sessionId) {
+    private io.agentscope.runtime.engine.memory.model.Session getOrCreateSession(String userId, String sessionId) {
         try {
             return contextManager.composeSession(userId, sessionId).join();
         } catch (Exception e) {
@@ -159,7 +158,7 @@ public class Runner implements AutoCloseable {
                 return contextManager.getSessionHistoryService().createSession(userId, Optional.of(sessionId)).join();
             } catch (Exception ex) {
                 // 如果创建失败，返回一个临时Session
-                return new Session(sessionId, userId, new ArrayList<>());
+                return new io.agentscope.runtime.engine.memory.model.Session(sessionId, userId, new ArrayList<>());
             }
         }
     }
@@ -170,7 +169,7 @@ public class Runner implements AutoCloseable {
     private void saveConversationHistory(Context context, String aiResponse) {
         try {
             // 获取当前会话
-            Session memorySession = getOrCreateSession(userId, sessionId);
+            io.agentscope.runtime.engine.memory.model.Session memorySession = getOrCreateSession(userId, sessionId);
             
             // 创建要保存的消息列表
             List<io.agentscope.runtime.engine.memory.model.Message> messagesToSave = new ArrayList<>();

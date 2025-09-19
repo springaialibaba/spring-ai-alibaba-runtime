@@ -108,6 +108,7 @@ public class LLMAgent extends BaseAgent {
         return openaiMessages;
     }
 
+    // FIXME, to be implemented
     private List<Map<String, Object>> convertToOpenAiTools(List<Object> tools) {
         return new ArrayList<>();
     }

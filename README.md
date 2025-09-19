@@ -73,15 +73,76 @@ Welcome to join our community on
 This example demonstrates how to create a simple LLM agent using AgentScope Runtime and stream responses from the Qwen model.
 
 ```java
+public static void main(String[] args) {
+	String apiKey = System.getenv("DASHSCOPE_API_KEY");
+	QwenLLM model = new QwenLLM("qwen-turbo", apiKey);
+	LLMAgent llmAgent = new LLMAgent(model, "single_turn_agent", "You are a helpful assistant", new AgentConfig());
 
+	ContextManager contextManager = new ContextManager();
+
+	try (Runner runner = new Runner(llmAgent, contextManager)) {
+		AgentRequest request = createAgentRequest("What is the capital of France?");
+		StringBuilder response = new StringBuilder();
+
+		runner.streamQuery(request)
+			.doOnNext(event -> {
+				if (event instanceof Message) {
+					Message message = (Message) event;
+					if (MessageType.MESSAGE.name().equals(message.getType()) &&
+							"completed".equals(message.getStatus())) {
+						if (message.getContent() != null && !message.getContent().isEmpty()) {
+							Content content = message.getContent().get(0);
+							if (content instanceof TextContent) {
+								TextContent textContent = (TextContent) content;
+								response.append(textContent.getText());
+							}
+						}
+					}
+				}
+			}).blockLast();
+
+			System.out.println(response.toString());
+	}
+}
 ```
 
 ### Basic Sandbox Usage Example
 
-This example demonstrates how to create sandboxed and execute tool within the sandbox.
+Tools in AgentScope Java are currently exposed as standard Spring AI Alibaba ToolCallbacks.
+
+For example, below is the definition of PythonCodeTool (a tool that can execute Python Code).
 
 ```java
+private ToolCallback RunPythonCodeTools() {
+	return FunctionToolCallback
+			.builder(
+					"PythonExecuteService",
+					new RunPythonTool()
+			).description("Execute Python code snippets and return the output or errors.")
+			.inputSchema(
+					"""
+							{
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "Python code to be executed"
+									}
+								},
+								"required": ["code"],
+								"description": "Request object to perform Python code execution"
+							}
+							"""
+			).inputType(RunPythonTool.RunPythonToolRequest.class)
+			.toolMetadata(ToolMetadata.builder().returnDirect(false).build())
+			.build();
+}
+```
 
+Developers can get s specific ToolCallback or a list of ToolCallbacks through the `ToolsInit` instance we exposed.
+
+```java
+toolsInit.getToolCallback("run_python");
 ```
 
 > [!NOTE]
@@ -90,45 +151,22 @@ This example demonstrates how to create sandboxed and execute tool within the sa
 
 ## 🔌 Agent Framework Integration
 
-### AgentScope Integration
-
-```java
-
-```
-
-### Spring AI Alibaba Integration
-
-```java
-
-```
-
-
-> [!NOTE]
->
-> More agent framework interations are comming soon!
+AgentScope Runtime Java implementation currently can automatically load Agents developed using Spring AI Alibaba. More agent framework interations are comming soon!
 
 ---
 
 ## 🏗️ Deployment
 
-The agent runner exposes a `deploy` method that takes a `DeployManager` instance and deploys the agent. The service port is set as the parameter `port` when creating the `LocalDeployManager`. The service endpoint path is set as the parameter `endpoint_path` when deploying the agent. In this example, we set the endpoint path to `/process`. After deployment, you can access the service at `http://localhost:8090/process`.
+AgentScope Java can expose Agents on a port in the form of standard A2A protocol.
 
-```python
-from agentscope_runtime.engine.deployers import LocalDeployManager
+Change the port through the `application.yml` file:
 
-# Create deployment manager
-deploy_manager = LocalDeployManager(
-    host="localhost",
-    port=8090,
-)
-
-# Deploy the agent as a streaming service
-deploy_result = await runner.deploy(
-    deploy_manager=deploy_manager,
-    endpoint_path="/process",
-    stream=True,  # Enable streaming responses
-)
+```yaml
+server:
+  port: 8090
 ```
+
+Run `io.agentscope.runtime.LocalDeployer` to start the A2A server.
 
 ---
 
@@ -156,23 +194,3 @@ We welcome contributions from the community! Here's how you can help:
 For detailed contributing guidelines, please see  [CONTRIBUTE](CONTRIBUTING.md).
 
 ---
-
-## 📄 License
-
-AgentScope Runtime is released under the [Apache License 2.0](LICENSE).
-
-```
-Copyright 2025 Tongyi Lab
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```

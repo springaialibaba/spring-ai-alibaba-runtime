@@ -1,4 +1,4 @@
-package io.agentscope.runtime.engine.examples;
+package io.agentscope.runtime.examples;
 
 import io.agentscope.runtime.engine.Runner;
 import io.agentscope.runtime.engine.agents.llm.LLMAgent;
@@ -15,9 +15,6 @@ import io.agentscope.runtime.engine.memory.model.MessageType;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 单轮对话LLM智能体示例
- */
 public class SingleTurnLLMExample {
 
     public static void main(String[] args) {

@@ -234,7 +234,7 @@ public class ServerAgentConfiguration {
         return null;
     }
 
-    //    Todo: 几个hook还没有添加，有一些转换的函数当前是空实现，compileConfig也没有实现
+    // Todo: 几个hook还没有添加，有一些转换的函数当前是空实现，compileConfig也没有实现
     private BaseAgent createAgent(AgentProperties.AgentDefinition def, ChatModel defaultChatModel, RuntimeConfigProperties runtimeConfig, LocalKeyStrategyFactory strategyFactory, Map<String, BaseAgent> existingAgents) {
         String type = def.getType();
         if (type == null || type.isEmpty()) {

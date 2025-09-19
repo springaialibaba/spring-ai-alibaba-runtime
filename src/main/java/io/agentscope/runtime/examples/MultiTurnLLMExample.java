@@ -1,4 +1,4 @@
-package io.agentscope.runtime.engine.examples;
+package io.agentscope.runtime.examples;
 
 import io.agentscope.runtime.engine.Runner;
 import io.agentscope.runtime.engine.agents.llm.LLMAgent;
@@ -17,9 +17,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 
-/**
- * 多轮对话LLM智能体示例
- */
 public class MultiTurnLLMExample {
 
     private static final String CONVERSATION_ID = "multi_turn_conversation_001";
