@@ -2,7 +2,6 @@ package runtime.engine.memory.model;
 
 /**
  * 消息类型枚举
- * 扩展了Agent相关的消息类型
  */
 public enum MessageType {
     MESSAGE,

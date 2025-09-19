@@ -4,12 +4,7 @@ import runtime.engine.memory.model.Message;
 import runtime.engine.memory.model.Session;
 import runtime.engine.memory.service.SessionHistoryService;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -105,6 +100,9 @@ public class InMemorySessionHistoryService implements SessionHistoryService {
                 Session storageSession = userSessions.get(session.getId());
                 if (storageSession != null) {
                     storageSession.getMessages().addAll(messages);
+                } else {
+                    System.err.println("Warning: Session " + session.getId() +
+                            " not found in storage for append_message.");
                 }
             }
         });

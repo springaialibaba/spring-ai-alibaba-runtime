@@ -30,6 +30,7 @@ public class AgentCardUtil {
         agentCard.setProtocolVersion(agentCardInfo.getProtocolVersion());
         agentCard.setCapabilities(transferFromAgentCardInfoCapabilities(agentCardInfo.getCapabilities()));
         agentCard.setSkills(transferFromAgentCardInfoSkills(agentCardInfo.getSkills()));
+        // TODO saa should support this auto.
         agentCard.setPreferredTransport("JSONRPC");
         return agentCard;
     }
@@ -40,6 +41,7 @@ public class AgentCardUtil {
         agentCapabilities.setStreaming(capabilities.isStreaming());
         agentCapabilities.setPushNotifications(capabilities.isPushNotifications());
         agentCapabilities.setStateTransitionHistory(capabilities.isStateTransitionHistory());
+        // TODO saa should support this.
         agentCapabilities.setExtensions(Collections.emptyList());
         return agentCapabilities;
     }
@@ -53,6 +55,7 @@ public class AgentCardUtil {
             newSkill.setDescription(skill.getDescription());
             newSkill.setTags(skill.getTags());
             newSkill.setExamples(skill.getExamples());
+            // TODO saa should support this.
             newSkill.setInputModes(Collections.emptyList());
             newSkill.setOutputModes(Collections.emptyList());
             result.add(newSkill);

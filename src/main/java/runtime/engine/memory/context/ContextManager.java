@@ -113,7 +113,7 @@ public class ContextManager extends ServiceManager {
                 if (sessionHistoryService != null) {
                     sessionHistoryService.appendMessage(session, eventOutput).get();
                 }
-                
+
                 MemoryService memoryService = getMemoryService();
                 if (memoryService != null) {
                     memoryService.addMemory(session.getUserId(), eventOutput, Optional.of(session.getId())).get();

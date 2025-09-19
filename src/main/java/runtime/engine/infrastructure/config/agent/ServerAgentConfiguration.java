@@ -1,10 +1,12 @@
 package runtime.engine.infrastructure.config.agent;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
 import java.util.stream.Collectors;
+
+import java.util.ArrayList;
 
 import runtime.sandbox.tools.ToolsInit;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
@@ -103,6 +105,9 @@ public class ServerAgentConfiguration {
         // 多轮构建：每轮都尝试构建所有可以构建的agent
         int round = 1;
         while (!remainingDefinitions.isEmpty()) {
+            System.out.println("=== 第 " + round + " 轮构建开始 ===");
+            System.out.println("待构建的agents: " + remainingDefinitions.keySet());
+            System.out.println("已构建的agents: " + agents.keySet());
 
             boolean progress = false;
             List<String> agentsToBuildThisRound = new ArrayList<>();
@@ -116,29 +121,39 @@ public class ServerAgentConfiguration {
                 if (canBuildAgent(def, agents)) {
                     agentsToBuildThisRound.add(agentName);
                     progress = true;
+                } else {
+                    // 显示缺失的依赖
+                    List<String> missingDependencies = getMissingDependencies(def, agents);
+                    System.out.println("Agent '" + agentName + "' 无法构建，缺失依赖: " + missingDependencies);
                 }
             }
 
             // 构建这一轮可以构建的所有agent
             for (String agentName : agentsToBuildThisRound) {
                 AgentProperties.AgentDefinition def = remainingDefinitions.get(agentName);
+                System.out.println("正在构建agent: " + agentName);
 
                 try {
                     BaseAgent agent = createAgent(def, defaultChatModel, runtimeConfig, strategyFactory, agents);
                     agents.put(agentName, agent);
                     remainingDefinitions.remove(agentName);
+                    System.out.println("成功构建agent: " + agentName);
                 } catch (Exception e) {
-                    // 构建失败，继续下一个
+                    System.err.println("构建agent '" + agentName + "' 失败: " + e.getMessage());
                     throw new IllegalStateException("Failed to build agent: " + agentName, e);
                 }
             }
 
+            System.out.println("第 " + round + " 轮构建完成，本轮构建了 " + agentsToBuildThisRound.size() + " 个agent");
+            System.out.println();
 
             // 如果没有进展，说明存在循环依赖或无法解决的依赖
             if (!progress) {
+                System.err.println("无法继续构建，剩余agents: " + remainingDefinitions.keySet());
                 for (String agentName : remainingDefinitions.keySet()) {
                     AgentProperties.AgentDefinition def = remainingDefinitions.get(agentName);
                     List<String> missingDependencies = getMissingDependencies(def, agents);
+                    System.err.println("Agent '" + agentName + "' 的缺失依赖: " + missingDependencies);
                 }
                 throw new IllegalStateException("Circular dependency or unresolved dependencies detected in agent definitions: " + remainingDefinitions.keySet());
             }
@@ -146,6 +161,7 @@ public class ServerAgentConfiguration {
             round++;
         }
 
+        System.out.println("=== 所有agents构建完成，共构建了 " + agents.size() + " 个agent ===");
 
         return agents;
     }
@@ -190,6 +206,7 @@ public class ServerAgentConfiguration {
             return List.of();
         }
 
+        System.out.println("从配置加载工具: " + toolNames);
         List<ToolCallback> tools = toolsInit.getToolsByName(toolNames);
 
         if (tools.isEmpty()) {
@@ -341,6 +358,7 @@ public class ServerAgentConfiguration {
 
     private ChatModel createAgentChatModel(AgentProperties.AgentDefinition def, ChatModel defaultChatModel, RuntimeConfigProperties runtimeConfig) {
         if (def.getModel() != null) {
+            System.out.println("为agent '" + def.getName() + "' 使用自定义模型配置");
             try {
                 return generateChatModel(def.getModel());
             } catch (Exception e) {

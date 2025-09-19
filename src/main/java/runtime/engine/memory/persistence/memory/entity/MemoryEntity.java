@@ -62,6 +62,7 @@ public class MemoryEntity {
         this.updatedAt = LocalDateTime.now();
     }
     
+    // Getters and Setters
     public Long getId() {
         return id;
     }
